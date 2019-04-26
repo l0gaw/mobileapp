@@ -92,8 +92,6 @@ namespace Toggl.iOS
         
         public override void ReceiveMemoryWarning(UIApplication application)
         {
-            base.ReceiveMemoryWarning(application);
-
             analyticsService.ReceivedLowMemoryWarning.Track(Platform.Daneel);
         }
 
