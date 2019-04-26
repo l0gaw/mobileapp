@@ -89,6 +89,13 @@ namespace Toggl.iOS
             return Google.SignIn.SignIn.SharedInstance.HandleUrl(url, openUrlOptions.SourceApplication, openUrlOptions.Annotation);
         }
         #endif
+        
+        public override void ReceiveMemoryWarning(UIApplication application)
+        {
+            base.ReceiveMemoryWarning(application);
+
+            analyticsService.ReceivedLowMemoryWarning.Track(Platform.Daneel);
+        }
 
         public override void OnActivated(UIApplication application)
         {
