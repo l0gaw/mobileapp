@@ -70,7 +70,7 @@ namespace Toggl.Core.UI.ViewModels
                 .StartWith(false);
         }
 
-        public override void Prepare(EmailParameter parameter)
+        public override void Initialize(EmailParameter parameter)
         {
             Email.OnNext(parameter.Email);
         }
@@ -90,7 +90,7 @@ namespace Toggl.Core.UI.ViewModels
 
         private void returnEmail()
         {
-            navigationService.Close(this, EmailParameter.With(Email.Value));
+            CloseView(EmailParameter.With(Email.Value));
         }
 
         private string toErrorString(Exception exception)

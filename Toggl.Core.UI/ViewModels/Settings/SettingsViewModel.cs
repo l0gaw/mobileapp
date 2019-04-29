@@ -289,10 +289,9 @@ namespace Toggl.Core.UI.ViewModels
             Close = rxActionFactory.FromAsync(close);
         }
 
-        public override async Task Initialize()
+        public override void Initialize()
         {
-            await base.Initialize();
-            await checkCalendarPermissions();
+            checkCalendarPermissions();
             navigationFromMainViewModelStopwatch = stopwatchProvider.Get(MeasuredOperation.OpenSettingsView);
             stopwatchProvider.Remove(MeasuredOperation.OpenStartView);
         }
@@ -347,7 +346,7 @@ namespace Toggl.Core.UI.ViewModels
         }
 
         private Task openCalendarSettings()
-            => navigationService.Navigate<CalendarSettingsViewModel>();
+            => navigationService.Navigate<CalendarSettingsViewModel, bool, string[]>(false);
 
         private Task openCalendarSmartReminders()
             => navigationService.Navigate<UpcomingEventsNotificationSettingsViewModel, Unit>();
@@ -362,7 +361,7 @@ namespace Toggl.Core.UI.ViewModels
 
             return interactorFactory.Logout(LogoutSource.Settings)
                 .Execute()
-                .Do(_ => navigationService.Navigate<LoginViewModel>());
+                .Do(_ => navigationService.Navigate<LoginViewModel, CredentialsParameter>(new CredentialsParameter()));
         }
 
         private IObservable<bool> isSynced()
@@ -505,6 +504,6 @@ namespace Toggl.Core.UI.ViewModels
             calendarPermissionGranted.OnNext(authorized);
         }
         
-        private Task close() => navigationService.Close(this);
+        private Task close() => CloseView();
     }
 }

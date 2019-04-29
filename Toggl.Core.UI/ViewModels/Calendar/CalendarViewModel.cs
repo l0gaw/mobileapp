@@ -202,7 +202,7 @@ namespace Toggl.Core.UI.ViewModels.Calendar
                 .DisposedBy(disposeBag);
         }
 
-        public async override Task Initialize()
+        public override void Initialize()
         {
             var dayChangedObservable = timeService
                 .MidnightObservable

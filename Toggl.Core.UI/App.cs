@@ -1,80 +1,28 @@
 ﻿using System;
+using System.Reactive;
 using System.Reactive.Linq;
-using MvvmCross.Plugin;
-using MvvmCross.ViewModels;
+using System.Threading.Tasks;
 using Toggl.Core.UI.Navigation;
 using Toggl.Core.UI.ViewModels;
-using Toggl.Shared;
 
 namespace Toggl.Core.UI
 {
-    public sealed class App<TFirstViewModelWhenNotLoggedIn> : MvxApplication
-        where TFirstViewModelWhenNotLoggedIn : MvxViewModel
+    public sealed class App<TFirstViewModelWhenNotLoggedIn, TInput>
+        where TFirstViewModelWhenNotLoggedIn : ViewModel<TInput, Unit>
+        where TInput : new()
     {
         private readonly UIDependencyContainer dependencyContainer;
-
-        public App()
-        {
-        }
-
         public App(UIDependencyContainer dependencyContainer)
         {
             this.dependencyContainer = dependencyContainer;
         }
         
-        public override void Initialize()
-        {
-            var appStart = new AppStart<TFirstViewModelWhenNotLoggedIn>(this, dependencyContainer);
-            RegisterAppStart(appStart);
-        }
-
-        public override void LoadPlugins(IMvxPluginManager pluginManager)
-        {
-        }
-
-        protected override IMvxViewModelLocator CreateDefaultViewModelLocator()
-            => new TogglViewModelLocator(dependencyContainer);
-    }
-
-    [Preserve(AllMembers = true)]
-    public sealed class AppStart<TFirstViewModelWhenNotLoggedIn> : MvxAppStart
-        where TFirstViewModelWhenNotLoggedIn : MvxViewModel
-    {
-        private readonly UIDependencyContainer dependencyContainer;
-
-        public AppStart(IMvxApplication app, UIDependencyContainer dependencyContainer)
-            : base (app, dependencyContainer.NavigationService)
-        {
-            this.dependencyContainer = dependencyContainer;
-        }
-
-        protected override void Startup(object hint = null)
+        public async Task Initialize()
         {
             revokeNewUserIfNeeded();
 
             dependencyContainer.BackgroundSyncService.SetupBackgroundSync(dependencyContainer.UserAccessManager);
 
-            base.Startup(hint);
-        }
-        
-        private void revokeNewUserIfNeeded()
-        {
-            const int newUserThreshold = 60;
-            var now = dependencyContainer.TimeService.CurrentDateTime;
-            var lastUsed = dependencyContainer.OnboardingStorage.GetLastOpened();
-            dependencyContainer.OnboardingStorage.SetLastOpened(now);
-            if (!lastUsed.HasValue)
-                return;
-
-            var offset = now - lastUsed;
-            if (offset < TimeSpan.FromDays(newUserThreshold))
-                return;
-
-            dependencyContainer.OnboardingStorage.SetIsNewUser(false);
-        }
-
-        protected override async void NavigateToFirstViewModel(object hint = null)
-        {
             var timeService = dependencyContainer.TimeService;
             var navigationService = dependencyContainer.NavigationService;
             var onboardingStorage = dependencyContainer.OnboardingStorage;
@@ -90,7 +38,7 @@ namespace Toggl.Core.UI
 
             if (!dependencyContainer.UserAccessManager.CheckIfLoggedIn())
             {
-                await navigationService.Navigate<TFirstViewModelWhenNotLoggedIn>();
+                await navigationService.Navigate<TFirstViewModelWhenNotLoggedIn, TInput>(new TInput());
                 return;
             }
             
@@ -104,6 +52,22 @@ namespace Toggl.Core.UI
             dependencyContainer.SyncManager.ForceFullSync().Subscribe();
 
             await navigationService.Navigate<MainTabBarViewModel>();
+        }
+
+        private void revokeNewUserIfNeeded()
+        {
+            const int newUserThreshold = 60;
+            var now = dependencyContainer.TimeService.CurrentDateTime;
+            var lastUsed = dependencyContainer.OnboardingStorage.GetLastOpened();
+            dependencyContainer.OnboardingStorage.SetLastOpened(now);
+            if (!lastUsed.HasValue)
+                return;
+
+            var offset = now - lastUsed;
+            if (offset < TimeSpan.FromDays(newUserThreshold))
+                return;
+
+            dependencyContainer.OnboardingStorage.SetIsNewUser(false);
         }
     }
 }

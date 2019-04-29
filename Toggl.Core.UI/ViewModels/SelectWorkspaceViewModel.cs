@@ -1,4 +1,5 @@
-﻿using System.Collections.ObjectModel;
+﻿using System;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
@@ -40,28 +41,26 @@ namespace Toggl.Core.UI.ViewModels
             SelectWorkspace = rxActionFactory.FromAsync<SelectableWorkspaceViewModel>(selectWorkspace);
         }
 
-        public override void Prepare(long currentWorkspaceId)
+        public override void Initialize(long currentWorkspaceId)
         {
             this.currentWorkspaceId = currentWorkspaceId;
-        }
 
-        public override async Task Initialize()
-        {
-            await base.Initialize();
-
-            var workspaces = await interactorFactory.GetAllWorkspaces().Execute();
-
-            Workspaces = workspaces
-                .Where(w => w.IsEligibleForProjectCreation())
-                .Select(w => new SelectableWorkspaceViewModel(w, w.Id == currentWorkspaceId))
-                .ToList()
-                .AsReadOnly();
+            interactorFactory.GetAllWorkspaces()
+                .Execute()
+                .Subscribe(workspaces =>
+                {
+                    Workspaces = workspaces
+                        .Where(w => w.IsEligibleForProjectCreation())
+                        .Select(w => new SelectableWorkspaceViewModel(w, w.Id == currentWorkspaceId))
+                        .ToList()
+                        .AsReadOnly();
+                });
         }
 
         private Task close()
-            => navigationService.Close(this, currentWorkspaceId);
+            => CloseView(currentWorkspaceId);
 
         private Task selectWorkspace(SelectableWorkspaceViewModel workspace)
-            => navigationService.Close(this, workspace.WorkspaceId);
+            => CloseView(workspace.WorkspaceId);
     }
 }

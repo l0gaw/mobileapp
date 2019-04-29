@@ -7,7 +7,6 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Tasks;
 using Toggl.Core.UI.Navigation;
-using MvvmCross.ViewModels;
 using Toggl.Core.Analytics;
 using Toggl.Core.DataSources;
 using Toggl.Core.Diagnostics;
@@ -180,12 +179,10 @@ namespace Toggl.Core.UI.ViewModels
             }
         }
 
-        public override async Task Initialize()
+        public override void Initialize()
         {
-            await base.Initialize();
-
-            await SuggestionsViewModel.Initialize();
-            await RatingViewModel.Initialize();
+            SuggestionsViewModel.Initialize();
+            RatingViewModel.Initialize();
 
             SyncProgressState = syncManager.ProgressObservable
                 .AsDriver(schedulerProvider);
@@ -263,15 +260,15 @@ namespace Toggl.Core.UI.ViewModels
             switch (urlNavigationAction)
             {
                 case ApplicationUrls.Main.Action.Continue:
-                    await continueMostRecentEntry();
+                    continueMostRecentEntry();
                     break;
 
                 case ApplicationUrls.Main.Action.Stop:
-                    await stopTimeEntry(TimeEntryStopOrigin.Deeplink);
+                    stopTimeEntry(TimeEntryStopOrigin.Deeplink);
                     break;
 
                 case ApplicationUrls.Main.Action.StopFromSiri:
-                    await stopTimeEntry(TimeEntryStopOrigin.Siri);
+                    stopTimeEntry(TimeEntryStopOrigin.Siri);
                     break;
             }
 
@@ -348,7 +345,6 @@ namespace Toggl.Core.UI.ViewModels
 
         public override void ViewDisappeared()
         {
-            base.ViewDisappeared();
             viewDisappearedAsync();
         }
 
@@ -357,9 +353,8 @@ namespace Toggl.Core.UI.ViewModels
             await TimeEntriesViewModel.FinalizeDelayDeleteTimeEntryIfNeeded();
         }
 
-        public override void ViewAppearing()
+        public override void ViewAppeared()
         {
-            base.ViewAppearing();
             ViewAppearingAsync();
         }
 
@@ -487,22 +482,22 @@ namespace Toggl.Core.UI.ViewModels
                 .Do(syncManager.InitiatePushSync);
         }
 
-        private Task navigate<TModel, TParameters>(TParameters value)
-            where TModel : IMvxViewModel<TParameters>
+        private Task navigate<TViewModel, TInput>(TInput payload)
+            where TViewModel : ViewModel<TInput, Unit>
         {
             if (hasStopButtonEverBeenUsed)
                 onboardingStorage.SetNavigatedAwayFromMainViewAfterStopButton();
 
-            return navigationService.Navigate<TModel, TParameters>(value);
+            return navigationService.Navigate<TViewModel, TInput>(payload);
         }
 
-        private Task navigate<TModel>()
-            where TModel : IMvxViewModel
+        private Task navigate<TViewModel>()
+            where TViewModel : ViewModel<Unit, Unit>
         {
             if (hasStopButtonEverBeenUsed)
                 onboardingStorage.SetNavigatedAwayFromMainViewAfterStopButton();
 
-            return navigationService.Navigate<TModel>();
+            return navigationService.Navigate<TViewModel>();
         }
     }
 }

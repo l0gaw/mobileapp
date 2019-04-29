@@ -67,7 +67,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
                         {
                             var calendarViewModel = callInfo.Arg<ReportsCalendarViewModel>();
                             calendarViewModel.Prepare();
-                            await calendarViewModel.Initialize();
+                            await calendarViewModel.Setup();
                             block.Set();
                         });
 

@@ -18,7 +18,7 @@ namespace Toggl.Droid.Activities
     [Activity(Theme = "@style/AppTheme",
               ScreenOrientation = ScreenOrientation.Portrait,
               ConfigurationChanges = ConfigChanges.Orientation | ConfigChanges.ScreenSize)]
-    public sealed class BrowserActivity : MvxAppCompatActivity<BrowserViewModel>
+    public sealed class BrowserActivity : ReactiveActivity<BrowserViewModel>
     {
         private Toolbar toolbar;
 
@@ -29,13 +29,22 @@ namespace Toggl.Droid.Activities
             OverridePendingTransition(Resource.Animation.abc_slide_in_right, Resource.Animation.abc_fade_out);
 
             setupToolbar();
-            setupBrowser();
+            InitializeViews();
         }
 
         public override void Finish()
         {
             base.Finish();
             OverridePendingTransition(Resource.Animation.abc_fade_in, Resource.Animation.abc_slide_out_right);
+        }
+
+        protected override void InitializeViews()
+        {
+            var webView = FindViewById<WebView>(Resource.Id.BrowserWebView);
+            webView.SetWebViewClient(new TogglWebViewClient(onPageFinishedLoading));
+            webView.SetWebChromeClient(new WebChromeClient());
+            webView.Settings.JavaScriptEnabled = true;
+            webView.LoadUrl(ViewModel.Url);
         }
 
         private void setupToolbar()
@@ -49,15 +58,6 @@ namespace Toggl.Droid.Activities
             SupportActionBar.SetDisplayShowHomeEnabled(true);
 
             toolbar.NavigationClick += onNavigateBack;
-        }
-
-        private void setupBrowser()
-        {
-            var webView = FindViewById<WebView>(Resource.Id.BrowserWebView);
-            webView.SetWebViewClient(new TogglWebViewClient(onPageFinishedLoading));
-            webView.SetWebChromeClient(new WebChromeClient());
-            webView.Settings.JavaScriptEnabled = true;
-            webView.LoadUrl(ViewModel.Url);
         }
 
         private void onPageFinishedLoading()

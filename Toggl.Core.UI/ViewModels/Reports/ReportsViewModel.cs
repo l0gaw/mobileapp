@@ -31,7 +31,7 @@ using Colors = Toggl.Core.UI.Helper.Colors;
 namespace Toggl.Core.UI.ViewModels.Reports
 {
     [Preserve(AllMembers = true)]
-    public sealed class ReportsViewModel : ViewModelWithInput<ReportPeriod>
+    public sealed class ReportsViewModel : ViewModel
     {
         private const float minimumSegmentPercentageToBeOnItsOwn = 5f;
         private const float maximumSegmentPercentageToEndUpInOther = 1f;
@@ -184,43 +184,46 @@ namespace Toggl.Core.UI.ViewModels.Reports
             ShowEmptyStateObservable = SegmentsObservable.CombineLatest(IsLoadingObservable, shouldShowEmptyState);
         }
 
-        public override void Prepare(ReportPeriod parameter)
+        public override void Initialize()
         {
-            base.Prepare();
-            calendarViewModel.SelectPeriod(parameter);
-        }
+            // MVEXIT: Fix before merging into develop
+            //calendarViewModel.SelectPeriod(parameter);
 
-        public override async Task Initialize()
-        {
             WorkspacesObservable
                 .Subscribe(data => Workspaces = data)
                 .DisposedBy(disposeBag);
+            
+            dataSource.User.Get()
+                .Subscribe(user =>
+                {
+                    userId = user.Id;
 
-            var user = await dataSource.User.Get();
-            userId = user.Id;
+                    interactorFactory.GetDefaultWorkspace()
+                        .TrackException<InvalidOperationException, IThreadSafeWorkspace>("ReportsViewModel.Initialize")
+                        .Execute()
+                        .Subscribe(workspace =>
+                        {
+                            workspaceId = workspace.Id;
+                            workspaceSubject.OnNext(workspace);
 
-            var workspace = await interactorFactory.GetDefaultWorkspace()
-                .TrackException<InvalidOperationException, IThreadSafeWorkspace>("ReportsViewModel.Initialize")
-                .Execute();
-            workspaceId = workspace.Id;
-            workspaceSubject.OnNext(workspace);
+                            calendarViewModel.SelectedDateRangeObservable
+                                .Subscribe(changeDateRange)
+                                .DisposedBy(disposeBag);
 
-            calendarViewModel.SelectedDateRangeObservable
-                .Subscribe(changeDateRange)
-                .DisposedBy(disposeBag);
+                            reportSubject
+                                .AsObservable()
+                                .Do(setLoadingState)
+                                .SelectMany(_ => interactorFactory.GetProjectSummary(workspaceId, startDate, endDate).Execute())
+                                .Subscribe(onReport, onError)
+                                .DisposedBy(disposeBag);
 
-            reportSubject
-                .AsObservable()
-                .Do(setLoadingState)
-                .SelectMany(_ => interactorFactory.GetProjectSummary(workspaceId, startDate, endDate).Execute())
-                .Subscribe(onReport, onError)
-                .DisposedBy(disposeBag);
+                            dataSource.Preferences.Current
+                                .Subscribe(onPreferencesChanged)
+                                .DisposedBy(disposeBag);
 
-            dataSource.Preferences.Current
-                .Subscribe(onPreferencesChanged)
-                .DisposedBy(disposeBag);
-
-            await calendarViewModel.Initialize();
+                            calendarViewModel.Initialize();
+                        });
+                });
         }
 
         public override void ViewAppeared()
@@ -234,7 +237,6 @@ namespace Toggl.Core.UI.ViewModels.Reports
 
             if (!didNavigateToCalendar)
             {
-                navigationService.Navigate(calendarViewModel);
                 didNavigateToCalendar = true;
                 intentDonationService.DonateShowReport();
                 return;
@@ -252,13 +254,15 @@ namespace Toggl.Core.UI.ViewModels.Reports
 
         public void ToggleCalendar()
         {
-            navigationService.ChangePresentation(new ToggleReportsCalendarVisibilityHint());
+            //MVEXIT: Fix this before merging in develop
+            // navigationService.ChangePresentation(new ToggleReportsCalendarVisibilityHint());
             calendarViewModel.OnToggleCalendar();
         }
 
         public void HideCalendar()
         {
-            navigationService.ChangePresentation(new ToggleReportsCalendarVisibilityHint(forceHide: true));
+            //MVEXIT: Fix this before merging in develop
+            // navigationService.ChangePresentation(new ToggleReportsCalendarVisibilityHint(forceHide: true));
             calendarViewModel.OnHideCalendar();
         }
 

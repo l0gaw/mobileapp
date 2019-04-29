@@ -82,7 +82,7 @@ namespace Toggl.Core.UI.ViewModels
                 .SelectMany(isEmpty => isEmpty
                     ? Observable.Return(true)
                     : dialogService.ConfirmDestructiveAction(ActionType.DiscardFeedback))
-                .DoIf(shouldBeClosed => shouldBeClosed, _ => navigationService.Close(this, false))
+                .DoIf(shouldBeClosed => shouldBeClosed, _ => CloseView(false))
                 .SelectUnit();
 
         private IObservable<Unit> sendFeedback()
@@ -106,7 +106,7 @@ namespace Toggl.Core.UI.ViewModels
                             break;
 
                         default:
-                            navigationService.Close(this, true);
+                            CloseView(true);
                             break;
                     }
                 })

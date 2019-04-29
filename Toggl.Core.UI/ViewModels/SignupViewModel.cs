@@ -188,10 +188,30 @@ namespace Toggl.Core.UI.ViewModels
                 .AsDriver(this.schedulerProvider);
         }
 
-        public override void Prepare(CredentialsParameter parameter)
+        public override void Initialize(CredentialsParameter parameter)
         {
             emailSubject.OnNext(parameter.Email);
             passwordSubject.OnNext(parameter.Password);
+
+            new GetAllCountriesInteractor().Execute()
+                .Subscribe(allCountries =>
+                {
+                    this.allCountries = allCountries;
+
+                    var api = apiFactory.CreateApiWith(Credentials.None);
+                    getCountrySubscription = new GetCurrentLocationInteractor(api)
+                        .Execute()
+                        .Select(location => allCountries.Single(country => country.CountryCode == location.CountryCode))
+                        .Subscribe(
+                            setCountryIfNeeded,
+                            _ => setCountryErrorIfNeeded(),
+                            () =>
+                            {
+                                getCountrySubscription?.Dispose();
+                                getCountrySubscription = null;
+                            }
+                        );
+                });
         }
 
         public void SetEmail(Email email)
@@ -202,27 +222,6 @@ namespace Toggl.Core.UI.ViewModels
 
         public void SetIsShowPasswordButtonVisible(bool visible)
             => isShowPasswordButtonVisibleSubject.OnNext(visible);
-
-        public override async Task Initialize()
-        {
-            await base.Initialize();
-
-            allCountries = await new GetAllCountriesInteractor().Execute();
-
-            var api = apiFactory.CreateApiWith(Credentials.None);
-            getCountrySubscription = new GetCurrentLocationInteractor(api)
-                .Execute()
-                .Select(location => allCountries.Single(country => country.CountryCode == location.CountryCode))
-                .Subscribe(
-                    setCountryIfNeeded,
-                    _ => setCountryErrorIfNeeded(),
-                    () =>
-                    {
-                        getCountrySubscription?.Dispose();
-                        getCountrySubscription = null;
-                    }
-                );
-        }
 
         public override void ViewDisappeared()
         {

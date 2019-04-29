@@ -118,18 +118,11 @@ namespace Toggl.Core.UI.ViewModels
             monthSubject.OnNext(newPage);
         }
 
-        public override void Prepare()
+        public override void Initialize()
         {
-            base.Prepare();
-
             var now = timeService.CurrentDateTime;
             initialMonth = new CalendarMonth(now.Year, now.Month).AddMonths(-(MonthsToShow - 1));
-        }
-
-        public override async Task Initialize()
-        {
-            await base.Initialize();
-
+  
             beginningOfWeekObservable = dataSource.User.Current
                 .Select(user => user.BeginningOfWeek)
                 .DistinctUntilChanged();
@@ -162,11 +155,14 @@ namespace Toggl.Core.UI.ViewModels
 
             QuickSelectShortcutsObservable = beginningOfWeekObservable.Select(createQuickSelectShortcuts);
 
-            beginningOfWeek = (await dataSource.User.Current.FirstAsync()).BeginningOfWeek;
+            dataSource.User.Current.FirstAsync()
+                .Subscribe(user =>
+                {
+                    beginningOfWeek = user.BeginningOfWeek;
+                    QuickSelectShortcuts = createQuickSelectShortcuts(beginningOfWeek);
 
-            QuickSelectShortcuts = createQuickSelectShortcuts(beginningOfWeek);
-
-            SelectPeriod(reportPeriod);
+                    SelectPeriod(reportPeriod);
+                });
 
             isInitialized = true;
             viewAppearedOnce = false;

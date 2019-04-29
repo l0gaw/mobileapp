@@ -38,39 +38,36 @@ namespace Toggl.Core.UI.ViewModels
             Close = rxActionFactory.FromAsync(close);
         }
 
-        public override async Task Initialize()
+        public override void Initialize(long? parameter)
         {
-            await base.Initialize();
+            selectedCountryId = parameter;
 
-            var allCountries = await new GetAllCountriesInteractor().Execute();
-
-            var selectedElement = allCountries.Find(c => c.Id == selectedCountryId);
-            if (selectedElement != null)
-            {
-                allCountries.Remove(selectedElement);
-                allCountries.Insert(0, selectedElement);
-            }
-
-            Countries = FilterText
-                .Select(text => text?.Trim() ?? string.Empty)
-                .DistinctUntilChanged()
-                .Select(trimmedText =>
+            new GetAllCountriesInteractor().Execute()
+                .Subscribe(allCountries =>
                 {
-                    return allCountries
-                        .Where(c => c.Name.ContainsIgnoringCase(trimmedText))
-                        .Select(c => new SelectableCountryViewModel(c, c.Id == selectedCountryId));
+                    var selectedElement = allCountries.Find(c => c.Id == selectedCountryId);
+                    if (selectedElement != null)
+                    {
+                        allCountries.Remove(selectedElement);
+                        allCountries.Insert(0, selectedElement);
+                    }
+
+                    Countries = FilterText
+                        .Select(text => text?.Trim() ?? string.Empty)
+                        .DistinctUntilChanged()
+                        .Select(trimmedText =>
+                        {
+                            return allCountries
+                                .Where(c => c.Name.ContainsIgnoringCase(trimmedText))
+                                .Select(c => new SelectableCountryViewModel(c, c.Id == selectedCountryId));
+                        });
                 });
         }
 
-        public override void Prepare(long? parameter)
-        {
-            selectedCountryId = parameter;
-        }
-
         private Task close()
-            => navigationService.Close(this);
+            => CloseView(null);
 
         private async Task selectCountry(SelectableCountryViewModel selectedCountry)
-            => await navigationService.Close(this, selectedCountry.Country.Id);
+            => await CloseView(selectedCountry.Country.Id);
     }
 }

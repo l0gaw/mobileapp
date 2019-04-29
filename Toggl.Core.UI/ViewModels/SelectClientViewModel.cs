@@ -52,26 +52,23 @@ namespace Toggl.Core.UI.ViewModels
             SelectClient = rxActionFactory.FromAsync<SelectableClientBaseViewModel>(selectClient);
         }
 
-        public override void Prepare(SelectClientParameters parameter)
+        public override void Initialize(SelectClientParameters parameter)
         {
             workspaceId = parameter.WorkspaceId;
             selectedClientId = parameter.SelectedClientId;
             noClient = new SelectableClientViewModel(0, Resources.NoClient, selectedClientId == 0);
-        }
 
-        public override async Task Initialize()
-        {
-            await base.Initialize();
-
-            var allClients = await interactorFactory
+            interactorFactory
                 .GetAllClientsInWorkspace(workspaceId)
-                .Execute();
-
-            Clients = FilterText
-                .Select(text => text?.Trim() ?? string.Empty)
-                .DistinctUntilChanged()
-                .Select(trimmedText => filterClientsByText(trimmedText, allClients))
-                .AsDriver(Enumerable.Empty<SelectableClientBaseViewModel>(), schedulerProvider);
+                .Execute()
+                .Subscribe(allClients =>
+                {
+                    Clients = FilterText
+                        .Select(text => text?.Trim() ?? string.Empty)
+                        .DistinctUntilChanged()
+                        .Select(trimmedText => filterClientsByText(trimmedText, allClients))
+                        .AsDriver(Enumerable.Empty<SelectableClientBaseViewModel>(), schedulerProvider);
+                });
         }
 
         private IEnumerable<SelectableClientBaseViewModel> filterClientsByText(string trimmedText, IEnumerable<IThreadSafeClient> allClients)
@@ -103,7 +100,7 @@ namespace Toggl.Core.UI.ViewModels
             => new SelectableClientViewModel(client.Id, client.Name, client.Id == selectedClientId);
 
         private Task close()
-            => navigationService.Close(this, null);
+            => CloseView(null);
 
         private async Task selectClient(SelectableClientBaseViewModel client)
         {
@@ -111,10 +108,10 @@ namespace Toggl.Core.UI.ViewModels
             {
                 case SelectableClientCreationViewModel c:
                     var newClient = await interactorFactory.CreateClient(c.Name.Trim(), workspaceId).Execute();
-                    await navigationService.Close(this, newClient.Id);
+                    await CloseView(newClient.Id);
                     break;
                 case SelectableClientViewModel c:
-                    await navigationService.Close(this, c.Id);
+                    await CloseView(c.Id);
                     break;
             }
         }

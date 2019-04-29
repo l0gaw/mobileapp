@@ -40,16 +40,16 @@ namespace Toggl.Core.UI.ViewModels
                             .ToImmutableList();
         }
 
-        public override void Prepare(DurationFormat parameter)
+        public override void Initialize(DurationFormat parameter)
         {
             defaultResult = parameter;
             updateSelectedFormat(parameter);
         }
 
-        private Task close() => navigationService.Close(this, defaultResult);
+        private Task close() => CloseView(defaultResult);
 
         private Task selectFormat(SelectableDurationFormatViewModel viewModel)
-            => navigationService.Close(this, viewModel.DurationFormat);
+            => CloseView(viewModel.DurationFormat);
 
         private void updateSelectedFormat(DurationFormat selected)
             => DurationFormats.ForEach(viewModel

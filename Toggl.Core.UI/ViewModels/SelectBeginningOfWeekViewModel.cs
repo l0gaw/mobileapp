@@ -36,16 +36,16 @@ namespace Toggl.Core.UI.ViewModels
                             .ToArray();
         }
 
-        public override void Prepare(BeginningOfWeek parameter)
+        public override void Initialize(BeginningOfWeek parameter)
         {
             defaultResult = parameter;
             updateSelectedFormat(parameter);
         }
 
-        private Task close() => navigationService.Close(this, defaultResult);
+        private Task close() => CloseView(defaultResult);
 
         private Task selectFormat(SelectableBeginningOfWeekViewModel viewModel)
-            => navigationService.Close(this, viewModel.BeginningOfWeek);
+            => CloseView(viewModel.BeginningOfWeek);
 
         private void updateSelectedFormat(BeginningOfWeek selected)
             => BeginningOfWeekCollection.ForEach(viewModel

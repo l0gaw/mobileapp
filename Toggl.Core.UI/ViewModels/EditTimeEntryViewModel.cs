@@ -239,69 +239,72 @@ namespace Toggl.Core.UI.ViewModels
             Delete = actionFactory.FromAsync(delete);
         }
 
-        protected override void ReloadFromBundle(IMvxBundle state)
-        {
-            base.ReloadFromBundle(state);
+        // MVExit: Fix this before merging into develop
+        //protected override void ReloadFromBundle(IMvxBundle state)
+        //{
+        //    base.ReloadFromBundle(state);
 
-            var ids = state.Data[nameof(TimeEntryIds)];
+        //    var ids = state.Data[nameof(TimeEntryIds)];
 
-            if (ids == null)
-                return;
+        //    if (ids == null)
+        //        return;
 
-            TimeEntryIds = ids.Split(',').Select(long.Parse).ToArray();
-        }
+        //    TimeEntryIds = ids.Split(',').Select(long.Parse).ToArray();
+        //}
 
-        protected override void SaveStateToBundle(IMvxBundle bundle)
-        {
-            base.SaveStateToBundle(bundle);
+        //protected override void SaveStateToBundle(IMvxBundle bundle)
+        //{
+        //    base.SaveStateToBundle(bundle);
 
-            bundle.Data[nameof(TimeEntryIds)] = string.Join(",", TimeEntryIds);
-        }
+        //    bundle.Data[nameof(TimeEntryIds)] = string.Join(",", TimeEntryIds);
+        //}
 
-        public override void Prepare(long[] parameter)
+        public override void Initialize(long[] parameter)
         {
             if (parameter == null || parameter.Length == 0)
                 throw new ArgumentException("Edit view has no Time Entries to edit.");
 
             TimeEntryIds = parameter;
-        }
-
-        public override async Task Initialize()
-        {
+            
             stopwatchFromCalendar = stopwatchProvider.Get(MeasuredOperation.EditTimeEntryFromCalendar);
             stopwatchProvider.Remove(MeasuredOperation.EditTimeEntryFromCalendar);
             stopwatchFromMainLog = stopwatchProvider.Get(MeasuredOperation.EditTimeEntryFromMainLog);
             stopwatchProvider.Remove(MeasuredOperation.EditTimeEntryFromMainLog);
 
-            var timeEntries = await interactorFactory.GetMultipleTimeEntriesById(TimeEntryIds).Execute();
-            var timeEntry = timeEntries.First();
-            originalTimeEntry = timeEntry;
+            interactorFactory
+                .GetMultipleTimeEntriesById(TimeEntryIds)
+                .Execute()
+                .Subscribe(timeEntries =>
+                {
+                    var timeEntry = timeEntries.First();
+                    originalTimeEntry = timeEntry;
 
-            projectId = timeEntry.Project?.Id;
-            taskId = timeEntry.Task?.Id;
-            workspaceIdSubject.OnNext(timeEntry.WorkspaceId);
+                    projectId = timeEntry.Project?.Id;
+                    taskId = timeEntry.Task?.Id;
+                    workspaceIdSubject.OnNext(timeEntry.WorkspaceId);
 
-            Description.Accept(timeEntry.Description);
+                    Description.Accept(timeEntry.Description);
 
-            projectClientTaskSubject.OnNext(new ProjectClientTaskInfo(
-                timeEntry.Project?.DisplayName(),
-                timeEntry.Project?.DisplayColor(),
-                timeEntry.Project?.Client?.Name,
-                timeEntry.Task?.Name));
+                    projectClientTaskSubject.OnNext(new ProjectClientTaskInfo(
+                        timeEntry.Project?.DisplayName(),
+                        timeEntry.Project?.DisplayColor(),
+                        timeEntry.Project?.Client?.Name,
+                        timeEntry.Task?.Name));
 
-            isBillableSubject.OnNext(timeEntry.Billable);
+                    isBillableSubject.OnNext(timeEntry.Billable);
 
-            startTimeSubject.OnNext(timeEntry.Start);
+                    startTimeSubject.OnNext(timeEntry.Start);
 
-            durationSubject.OnNext(timeEntry.TimeSpanDuration());
+                    durationSubject.OnNext(timeEntry.TimeSpanDuration());
 
-            GroupDuration = timeEntries.Sum(entry => entry.TimeSpanDuration());
+                    GroupDuration = timeEntries.Sum(entry => entry.TimeSpanDuration());
 
-            tagsSubject.OnNext(timeEntry.Tags?.ToImmutableList() ?? ImmutableList<IThreadSafeTag>.Empty);
+                    tagsSubject.OnNext(timeEntry.Tags?.ToImmutableList() ?? ImmutableList<IThreadSafeTag>.Empty);
 
-            isInaccessibleSubject.OnNext(timeEntry.IsInaccessible);
+                    isInaccessibleSubject.OnNext(timeEntry.IsInaccessible);
 
-            setupSyncError(timeEntries);
+                    setupSyncError(timeEntries);
+                });
         }
 
         private void setupSyncError(IEnumerable<IThreadSafeTimeEntry> timeEntries)
@@ -338,10 +341,8 @@ namespace Toggl.Core.UI.ViewModels
             stopwatchFromMainLog = null;
         }
 
-        public override void ViewDestroy(bool viewFinishing)
+        public override void ViewDestroyed()
         {
-            base.ViewDestroy(viewFinishing);
-
             disposeBag?.Dispose();
         }
 
@@ -503,7 +504,7 @@ namespace Toggl.Core.UI.ViewModels
                     return false;
             }
 
-            await navigationService.Close(this);
+            await CloseView();
             return true;
         }
 
@@ -548,7 +549,7 @@ namespace Toggl.Core.UI.ViewModels
             interactorFactory
                 .UpdateMultipleTimeEntries(timeEntriesDtos)
                 .Execute()
-                .SubscribeToErrorsAndCompletion((Exception ex) => close(), () => close())
+                .SubscribeToErrorsAndCompletion((Exception ex) => CloseView(), () => CloseView())
                 .DisposedBy(disposeBag);
         }
 
@@ -579,7 +580,7 @@ namespace Toggl.Core.UI.ViewModels
             var isDeletionConfirmed = await delete(actionType, TimeEntryIds.Length, interactor);
 
             if (isDeletionConfirmed)
-                await close();
+                await CloseView();
         }
 
         private async Task<bool> delete(ActionType actionType, int entriesCount, IInteractor<IObservable<Unit>> deletionInteractor)
@@ -596,9 +597,6 @@ namespace Toggl.Core.UI.ViewModels
 
             return true;
         }
-
-        private Task close()
-            => navigationService.Close(this);
 
         public struct ProjectClientTaskInfo
         {

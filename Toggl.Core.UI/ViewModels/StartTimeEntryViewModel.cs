@@ -200,10 +200,10 @@ namespace Toggl.Core.UI.ViewModels
             var startTimeEntryParameters = userPreferences.IsManualModeEnabled
                 ? StartTimeEntryParameters.ForManualMode(now)
                 : StartTimeEntryParameters.ForTimerMode(now);
-            Prepare(startTimeEntryParameters);
+            Initialize(startTimeEntryParameters);
         }
 
-        public override void Prepare(StartTimeEntryParameters parameter)
+        public override async void Initialize(StartTimeEntryParameters parameter)
         {
             this.parameter = parameter;
             startTime = parameter.StartTime;
@@ -221,11 +221,7 @@ namespace Toggl.Core.UI.ViewModels
                 .Where(_ => isRunning)
                 .Subscribe(currentTime => displayedTime.Accept(currentTime - startTime))
                 .DisposedBy(disposeBag);
-        }
 
-        public override async Task Initialize()
-        {
-            await base.Initialize();
             startTimeEntryStopwatch = stopwatchProvider.Get(MeasuredOperation.OpenStartView);
             stopwatchProvider.Remove(MeasuredOperation.OpenStartView);
 
@@ -284,9 +280,8 @@ namespace Toggl.Core.UI.ViewModels
             startTimeEntryStopwatch = null;
         }
 
-        public override void ViewDestroy(bool viewFinishing)
+        public override void ViewDestroyed()
         {
-            base.ViewDestroy(viewFinishing);
             disposeBag?.Dispose();
         }
 
@@ -305,7 +300,7 @@ namespace Toggl.Core.UI.ViewModels
                     return false;
             }
 
-            await navigationService.Close(this);
+            await CloseView();
             return true;
         }
 
@@ -543,7 +538,7 @@ namespace Toggl.Core.UI.ViewModels
                 origin = paramOrigin;
             }
             return interactorFactory.CreateTimeEntry(timeEntry, origin).Execute()
-                .Do(_ => navigationService.Close(this))
+                .Do(_ => CloseView())
                 .SelectUnit();
         }
 

@@ -167,7 +167,7 @@ namespace Toggl.Core.UI.ViewModels
                     && name.LengthInBytes() <= Constants.MaxProjectNameLengthInBytes;
         }
 
-        public override void Prepare(string parameter)
+        public override void Initialize(string parameter)
         {
             Name.Accept(parameter);
 
@@ -183,7 +183,7 @@ namespace Toggl.Core.UI.ViewModels
         }
 
         private Task close()
-            => navigationService.Close(this, null);
+            => CloseView(null);
 
         private IObservable<IThreadSafeWorkspace> pickWorkspace()
         {
@@ -258,7 +258,7 @@ namespace Toggl.Core.UI.ViewModels
                         : getDto(workspace)
                             .SelectMany(dto => interactorFactory.CreateProject(dto).Execute())
                             .SelectMany(createdProject =>
-                                navigationService.Close(this, createdProject.Id).ToObservable())
+                                CloseView(createdProject.Id).ToObservable())
                             .SelectUnit()
                     )
                 );

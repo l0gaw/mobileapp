@@ -1,16 +1,14 @@
 using System;
 using Android.App;
 using Android.Runtime;
-using MvvmCross.Droid.Support.V7.AppCompat;
-using Toggl.Core.UI;
-using Toggl.Core.UI.ViewModels;
 
 namespace Toggl.Droid
 {
     [Application(AllowBackup = false)]
-    public class TogglApplication : MvxAppCompatApplication<Setup, App<LoginViewModel>>
+    public class TogglApplication : Application
     {
-        public TogglApplication(IntPtr javaReference, JniHandleOwnership transfer) : base(javaReference, transfer)
+        public TogglApplication(IntPtr javaReference, JniHandleOwnership transfer)
+            : base(javaReference, transfer)
         {
         }
 

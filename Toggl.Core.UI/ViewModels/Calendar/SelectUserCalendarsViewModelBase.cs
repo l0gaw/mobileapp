@@ -68,20 +68,15 @@ namespace Toggl.Core.UI.ViewModels.Calendar
             Calendars = calendarsSubject.AsObservable().DistinctUntilChanged();
         }
 
-        public sealed override void Prepare(bool parameter)
+        public override void Initialize(bool forceItemSelection)
         {
-            ForceItemSelection = parameter;
-        }
-
-        public override async Task Initialize()
-        {
-            await base.Initialize();
+            ForceItemSelection = forceItemSelection;
 
             var calendarIds = UserPreferences.EnabledCalendarIds();
             InitialSelectedCalendarIds.AddRange(calendarIds);
             SelectedCalendarIds.AddRange(calendarIds);
 
-            await ReloadCalendars();
+            ReloadCalendars();
 
             var enabledObservable = ForceItemSelection
                 ? SelectCalendar.Elements
@@ -127,9 +122,9 @@ namespace Toggl.Core.UI.ViewModels.Calendar
         }
 
         protected virtual Task OnClose()
-            => NavigationService.Close(this, InitialSelectedCalendarIds.ToArray());
+            => CloseView(InitialSelectedCalendarIds.ToArray());
 
         protected virtual Task OnDone()
-            => NavigationService.Close(this, SelectedCalendarIds.ToArray());
+            => CloseView(SelectedCalendarIds.ToArray());
     }
 }

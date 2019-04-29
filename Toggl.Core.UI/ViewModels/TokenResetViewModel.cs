@@ -15,6 +15,7 @@ using Toggl.Shared;
 using Toggl.Shared.Extensions;
 using Toggl.Storage.Settings;
 using Toggl.Networking.Exceptions;
+using Toggl.Core.UI.Parameters;
 
 namespace Toggl.Core.UI.ViewModels
 {
@@ -109,14 +110,14 @@ namespace Toggl.Core.UI.ViewModels
                 .AsDriver(schedulerProvider);
         }
 
-        public override async Task Initialize()
+        public override void Initialize()
         {
-            await base.Initialize();
+            dataSource.HasUnsyncedData()
+                .Subscribe(needsSync => this.needsSync = needsSync);
 
-            needsSync = await dataSource.HasUnsyncedData();
-            var user = await dataSource.User.Current.FirstAsync();
-
-            emailSubject.OnNext(user.Email);
+            dataSource.User.Current
+                .FirstAsync()
+                .Subscribe(user => emailSubject.OnNext(user.Email));
         }
 
         private void togglePasswordVisibility()
@@ -134,7 +135,7 @@ namespace Toggl.Core.UI.ViewModels
             }
 
             await interactorFactory.Logout(LogoutSource.TokenReset).Execute();
-            await navigationService.Navigate<LoginViewModel>();
+            await navigationService.Navigate<LoginViewModel, CredentialsParameter>(new CredentialsParameter());
         }
 
         private IObservable<Unit> done() =>

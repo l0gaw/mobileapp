@@ -73,7 +73,7 @@ namespace Toggl.Core.UI.ViewModels
                 .CombineLatest(selectedColor, updateSelectableColors);
         }
 
-        public override void Prepare(ColorParameters parameter)
+        public override void Initialize(ColorParameters parameter)
         {
             defaultColor = parameter.Color;
             AllowCustomColors = parameter.AllowCustomColors;
@@ -122,9 +122,9 @@ namespace Toggl.Core.UI.ViewModels
             => availableColors.Select(color => new SelectableColorViewModel(color, color == selectedColor));
 
         private Task close()
-            => navigationService.Close(this, defaultColor);
+            => CloseView(defaultColor);
 
         private Task save()
-            => navigationService.Close(this, selectedColor.Value);
+            => CloseView(selectedColor.Value);
     }
 }

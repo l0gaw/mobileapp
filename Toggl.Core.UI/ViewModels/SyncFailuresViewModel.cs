@@ -1,6 +1,6 @@
-﻿using System.Collections.Immutable;
+﻿using System;
+using System.Collections.Immutable;
 using System.Reactive.Linq;
-using System.Threading.Tasks;
 using Toggl.Core.Interactors;
 using Toggl.Core.Models;
 using Toggl.Shared;
@@ -21,16 +21,13 @@ namespace Toggl.Core.UI.ViewModels
             this.interactorFactory = interactorFactory;
         }
 
-        public override async Task Initialize()
+        public override void Initialize()
         {
-            await base.Initialize();
-
-            var syncFailures = await interactorFactory
+            interactorFactory
                 .GetItemsThatFailedToSync()
                 .Execute()
-                .FirstAsync();
-
-            SyncFailures = syncFailures.ToImmutableList();
+                .FirstAsync()
+                .Subscribe(syncFailures => SyncFailures = syncFailures.ToImmutableList());
         }
     }
 }

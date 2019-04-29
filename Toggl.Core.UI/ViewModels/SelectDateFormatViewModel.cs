@@ -46,17 +46,17 @@ namespace Toggl.Core.UI.ViewModels
                 .ToImmutableList();
         }
 
-        public override void Prepare(DateFormat parameter)
+        public override void Initialize(DateFormat parameter)
         {
             defaultResult = parameter;
 
             updateSelectedFormat(parameter);
         }
 
-        private Task close() => navigationService.Close(this, defaultResult);
+        private Task close() => CloseView(defaultResult);
 
         private Task selectFormat(SelectableDateFormatViewModel dateFormatViewModel)
-            => navigationService.Close(this, dateFormatViewModel.DateFormat);
+            => CloseView(dateFormatViewModel.DateFormat);
 
         private void updateSelectedFormat(DateFormat selected)
             => DateTimeFormats.ForEach(dateFormat

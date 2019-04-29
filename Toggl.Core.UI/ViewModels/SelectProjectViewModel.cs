@@ -106,55 +106,53 @@ namespace Toggl.Core.UI.ViewModels
             return true;
         }
 
-        public override void Prepare(SelectProjectParameter parameter)
+        public override void Initialize(SelectProjectParameter parameter)
         {
             taskId = parameter.TaskId;
             projectId = parameter.ProjectId;
             workspaceId = parameter.WorkspaceId;
-        }
 
-        public override async Task Initialize()
-        {
-            await base.Initialize();
             navigationFromEditTimeEntryViewModelStopwatch = stopwatchProvider.Get(MeasuredOperation.OpenSelectProjectFromEditView);
             stopwatchProvider.Remove(MeasuredOperation.OpenSelectProjectFromEditView);
 
-            var workspaces = await interactorFactory.GetAllWorkspaces().Execute();
-
-            projectCreationSuggestionsAreEnabled = workspaces.Any(ws => ws.IsEligibleForProjectCreation());
-            UseGrouping = workspaces.Count() > 1;
-
-            FilterText.Subscribe(async text =>
-            {
-                var suggestions = interactorFactory.GetProjectsAutocompleteSuggestions(text.SplitToQueryWords()).Execute().SelectMany(x => x).ToEnumerable()
-                    .Cast<ProjectSuggestion>()
-                    .Select(setSelectedProject);
-
-                var collectionSections = suggestions
-                    .GroupBy(project => project.WorkspaceId)
-                    .Select(grouping => grouping.OrderBy(projectSuggestion => projectSuggestion.ProjectName))
-                    .OrderBy(grouping => grouping.First().WorkspaceName)
-                    .Select(grouping => collectionSection(grouping, prependNoProject: string.IsNullOrEmpty(text)))
-                    .ToList();
-
-                if (shouldSuggestCreation(text))
+            interactorFactory.GetAllWorkspaces().Execute()
+                .Subscribe(workspaces =>
                 {
-                    var createEntitySuggestion = new CreateEntitySuggestion(Resources.CreateProject, text);
-                    var section = new SectionModel<string, AutocompleteSuggestion>(null, new[] { createEntitySuggestion });
-                    collectionSections.Insert(0, section);
-                }
+                    projectCreationSuggestionsAreEnabled = workspaces.Any(ws => ws.IsEligibleForProjectCreation());
+                    UseGrouping = workspaces.Count() > 1;
 
-                if (collectionSections.None())
-                {
-                    var workspace = await interactorFactory.GetWorkspaceById(workspaceId).Execute();
-                    var noProjectSuggestion = ProjectSuggestion.NoProject(workspace.Id, workspace.Name);
-                    collectionSections.Add(
-                        new SectionModel<string, AutocompleteSuggestion>(null, new[] { noProjectSuggestion })
-                    );
-                }
+                    FilterText.Subscribe(async text =>
+                    {
+                        var suggestions = interactorFactory.GetProjectsAutocompleteSuggestions(text.SplitToQueryWords()).Execute().SelectMany(x => x).ToEnumerable()
+                            .Cast<ProjectSuggestion>()
+                            .Select(setSelectedProject);
 
-                suggestionsSubject.OnNext(collectionSections);
-            });
+                        var collectionSections = suggestions
+                            .GroupBy(project => project.WorkspaceId)
+                            .Select(grouping => grouping.OrderBy(projectSuggestion => projectSuggestion.ProjectName))
+                            .OrderBy(grouping => grouping.First().WorkspaceName)
+                            .Select(grouping => collectionSection(grouping, prependNoProject: string.IsNullOrEmpty(text)))
+                            .ToList();
+
+                        if (shouldSuggestCreation(text))
+                        {
+                            var createEntitySuggestion = new CreateEntitySuggestion(Resources.CreateProject, text);
+                            var section = new SectionModel<string, AutocompleteSuggestion>(null, new[] { createEntitySuggestion });
+                            collectionSections.Insert(0, section);
+                        }
+
+                        if (collectionSections.None())
+                        {
+                            var workspace = await interactorFactory.GetWorkspaceById(workspaceId).Execute();
+                            var noProjectSuggestion = ProjectSuggestion.NoProject(workspace.Id, workspace.Name);
+                            collectionSections.Add(
+                                new SectionModel<string, AutocompleteSuggestion>(null, new[] { noProjectSuggestion })
+                            );
+                        }
+
+                        suggestionsSubject.OnNext(collectionSections);
+                    });
+                });
         }
 
         public override void ViewAppeared()
@@ -192,12 +190,11 @@ namespace Toggl.Core.UI.ViewModels
 
             var project = await interactorFactory.GetProjectById(createdProjectId.Value).Execute();
             var parameter = SelectProjectParameter.WithIds(project.Id, null, project.WorkspaceId);
-            await navigationService.Close(this, parameter);
+            await CloseView(parameter);
         }
 
         private Task close()
-            => navigationService.Close(
-                this,
+            => CloseView(
                 SelectProjectParameter.WithIds(projectId, taskId, workspaceId));
 
         private async Task selectProject(AutocompleteSuggestion suggestion)
@@ -246,9 +243,7 @@ namespace Toggl.Core.UI.ViewModels
                     throw new ArgumentException($"{nameof(suggestion)} must be either of type {nameof(ProjectSuggestion)} or {nameof(TaskSuggestion)}.");
             }
 
-            navigationService.Close(
-                this,
-                SelectProjectParameter.WithIds(projectId, taskId, workspaceId));
+            CloseView(SelectProjectParameter.WithIds(projectId, taskId, workspaceId));
         }
 
         private void toggleTaskSuggestions(ProjectSuggestion projectSuggestion)

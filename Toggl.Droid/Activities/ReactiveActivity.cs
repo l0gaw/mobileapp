@@ -1,74 +1,48 @@
 ﻿using System;
 using System.Reactive.Disposables;
+using System.Threading.Tasks;
 using Android.Content;
 using Android.Content.PM;
-using Android.OS;
 using Android.Runtime;
-using MvvmCross.Binding.BindingContext;
-using MvvmCross.Droid.Support.V7.AppCompat.EventSource;
-using MvvmCross.Platforms.Android.Binding.BindingContext;
-using MvvmCross.Platforms.Android.Views;
-using MvvmCross.ViewModels;
-using MvvmCross.Views;
+using Android.Support.V7.App;
+using Toggl.Core.UI.ViewModels;
 using static Toggl.Droid.Services.PermissionsServiceAndroid;
 
 namespace Toggl.Droid.Activities
 {
-    public abstract class ReactiveActivity<TViewModel> : MvxEventSourceAppCompatActivity, IMvxAndroidView, IPermissionAskingActivity
-        where TViewModel : class, IMvxViewModel
+    public abstract class ReactiveActivity<TViewModel> : AppCompatActivity, IView, IPermissionAskingActivity
+        where TViewModel : IViewModelLifecycle
     {
         public CompositeDisposable DisposeBag { get; private set; } = new CompositeDisposable();
 
         protected abstract void InitializeViews();
-
-        public object DataContext
-        {
-            get => BindingContext.DataContext;
-            set => BindingContext.DataContext = value;
-        }
-
-        public TViewModel ViewModel
-        {
-            get => DataContext as TViewModel;
-            set => DataContext = value;
-        }
-
-        IMvxViewModel IMvxView.ViewModel
-        {
-            get => ViewModel;
-            set => ViewModel = value as TViewModel;
-        }
-
-        public IMvxBindingContext BindingContext { get; set; }
-
+        
+        public TViewModel ViewModel { get; }
+        
         public Action<int, string[], Permission[]> OnPermissionChangedCallback { get; set; }
 
         protected ReactiveActivity()
         {
-            BindingContext = new MvxAndroidBindingContext(this, this);
-            this.AddEventListeners();
+            ViewModel = AndroidDependencyContainer.Instance
+                .ActivityPresenter
+                .GetCachedViewModel<TViewModel>();
         }
 
-        protected ReactiveActivity(IntPtr javaReference, JniHandleOwnership transfer) : base(javaReference, transfer)
+        protected ReactiveActivity(IntPtr javaReference, JniHandleOwnership transfer)
+            : base(javaReference, transfer)
         {
-        }
-
-        protected override void OnCreate(Bundle bundle)
-        {
-            base.OnCreate(bundle);
-            ViewModel?.ViewCreated();
         }
 
         protected override void OnDestroy()
         {
             base.OnDestroy();
-            ViewModel?.ViewDestroy();
+            ViewModel?.ViewDestroyed();
         }
 
         protected override void OnStart()
         {
-            base.OnStart();
-            ViewModel?.ViewAppearing();
+            base.OnResume();
+            ViewModel?.ViewAttached(this);
         }
 
         protected override void OnResume()
@@ -80,13 +54,13 @@ namespace Toggl.Droid.Activities
         protected override void OnPause()
         {
             base.OnPause();
-            ViewModel?.ViewDisappearing();
+            ViewModel?.ViewDisappeared();
         }
 
         protected override void OnStop()
         {
             base.OnStop();
-            ViewModel?.ViewDisappeared();
+            ViewModel?.ViewDetached();
         }
 
         public void MvxInternalStartActivityForResult(Intent intent, int requestCode)
@@ -108,6 +82,12 @@ namespace Toggl.Droid.Activities
 
             OnPermissionChangedCallback?.Invoke(requestCode, permissions, grantResults);
             OnPermissionChangedCallback = null;
+        }
+
+        public Task Close()
+        {
+            Finish();
+            return Task.CompletedTask;
         }
     }
 }

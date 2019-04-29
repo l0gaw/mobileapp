@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Reactive.Linq;
 using System.Reactive;
-using System.Threading.Tasks;
 using Toggl.Core.DataSources;
 using Toggl.Core.Interactors;
 using Toggl.Core.Models.Interfaces;
@@ -18,7 +17,7 @@ using Toggl.Storage.Settings;
 namespace Toggl.Core.UI.ViewModels
 {
     [Preserve(AllMembers = true)]
-    public sealed class SelectDefaultWorkspaceViewModel : ViewModelWithOutput<Unit>
+    public sealed class SelectDefaultWorkspaceViewModel : ViewModel
     {
         private readonly ITogglDataSource dataSource;
         private readonly IInteractorFactory interactorFactory;
@@ -52,17 +51,16 @@ namespace Toggl.Core.UI.ViewModels
             SelectWorkspace = rxActionFactory.FromObservable<SelectableWorkspaceViewModel>(selectWorkspace);
         }
 
-        public override async Task Initialize()
+        public override void Initialize()
         {
-            await base.Initialize();
-
-            Workspaces = await dataSource
+            dataSource
                 .Workspaces
                 .GetAll()
                 .Do(throwIfThereAreNoWorkspaces)
                 .Select(workspaces => workspaces
                     .Select(toSelectable)
-                    .ToImmutableList());
+                    .ToImmutableList())
+                .Subscribe(workspaces => Workspaces = workspaces);
         }
 
         private SelectableWorkspaceViewModel toSelectable(IThreadSafeWorkspace workspace)
@@ -73,7 +71,7 @@ namespace Toggl.Core.UI.ViewModels
             {
                 await interactorFactory.SetDefaultWorkspace(workspace.WorkspaceId).Execute();
                 accessRestrictionStorage.SetNoDefaultWorkspaceStateReached(false);
-                await navigationService.Close(this, Unit.Default);
+                await CloseView();
                 return Observable.Return(Unit.Default);
             });
 

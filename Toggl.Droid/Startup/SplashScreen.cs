@@ -1,11 +1,15 @@
 using Android.App;
+using Android.Content;
 using Android.Content.PM;
 using Android.OS;
-using MvvmCross.Droid.Support.V7.AppCompat;
+using Android.Support.V7.App;
 using Toggl.Core;
 using Toggl.Core.UI;
+using Toggl.Core.UI.Parameters;
 using Toggl.Core.UI.ViewModels;
+using Toggl.Droid.BroadcastReceivers;
 using Toggl.Droid.Helper;
+using Toggl.Networking;
 using static Android.Content.Intent;
 
 namespace Toggl.Droid
@@ -25,29 +29,56 @@ namespace Toggl.Droid
         new[] { "android.intent.action.PROCESS_TEXT" },
         Categories = new[] { "android.intent.category.DEFAULT" },
         DataMimeType = "text/plain")]
-    public class SplashScreen : MvxSplashScreenAppCompatActivity<Setup, App<LoginViewModel>>
+    public class SplashScreen : AppCompatActivity
     {
-        public SplashScreen()
-            : base(Resource.Layout.SplashScreen)
+        private const ApiEnvironment environment =
+#if USE_PRODUCTION_API
+                        ApiEnvironment.Production;
+#else
+                        ApiEnvironment.Staging;
+#endif
+
+        protected override void OnCreate(Bundle bundle)
         {
+#if !USE_PRODUCTION_API
+            System.Net.ServicePointManager.ServerCertificateValidationCallback
+                  += (sender, certificate, chain, sslPolicyErrors) => true;
+#endif
+            base.OnCreate(bundle);
 
-        }
+            SetContentView(Resource.Layout.SplashScreen);
+            
+            var applicationContext = Application.Context;
+            var packageInfo = applicationContext.PackageManager.GetPackageInfo(applicationContext.PackageName, 0);
 
-        protected override void RunAppStart(Bundle bundle)
-        {
-            base.RunAppStart(bundle);
-            var navigationUrl = Intent.Data?.ToString() ?? getTrackUrlFromProcessedText();
-            var navigationService = AndroidDependencyContainer.Instance.NavigationService;
-            if (string.IsNullOrEmpty(navigationUrl))
-            {
-                Finish();
-                return;
-            }
+            AndroidDependencyContainer.EnsureInitialized(environment, Platform.Giskard, packageInfo.VersionName);
 
-            navigationService.Navigate(navigationUrl).ContinueWith(_ =>
+            var dependencyContainer = AndroidDependencyContainer.Instance;
+            ApplicationContext.RegisterReceiver(new TimezoneChangedBroadcastReceiver(dependencyContainer.TimeService),
+                new IntentFilter(ActionTimezoneChanged));
+
+            //createApplicationLifecycleObserver(dependencyContainer.BackgroundService);
+
+            var app = new App<LoginViewModel, CredentialsParameter>(AndroidDependencyContainer.Instance);
+            app.Initialize().ContinueWith(_ =>
             {
                 Finish();
             });
+
+
+            //MVEXIT: Reimplementing url based navigation is meant to be done on another PR
+            //var navigationUrl = Intent.Data?.ToString() ?? getTrackUrlFromProcessedText();
+            //var navigationService = AndroidDependencyContainer.Instance.NavigationService;
+            //if (string.IsNullOrEmpty(navigationUrl))
+            //{
+            //    Finish();
+            //    return;
+            //}
+
+            //navigationService.Navigate(navigationUrl).ContinueWith(_ =>
+            //{
+            //    Finish();
+            //});
         }
 
         private string getTrackUrlFromProcessedText()
@@ -62,5 +93,22 @@ namespace Toggl.Droid
             var applicationUrl = ApplicationUrls.Main.Track(description);
             return applicationUrl;
         }
+
+        // MVEXIT: Fix before merging into develop
+        //protected override IMvxAndroidCurrentTopActivity CreateAndroidCurrentTopActivity()
+        //{
+        //    var mvxApplication = MvxAndroidApplication.Instance;
+        //    var activityLifecycleCallbacksManager = new QueryableMvxLifecycleMonitorCurrentTopActivity();
+        //    mvxApplication.RegisterActivityLifecycleCallbacks(activityLifecycleCallbacksManager);
+        //    return activityLifecycleCallbacksManager;
+        //}
+
+        //private void createApplicationLifecycleObserver(IBackgroundService backgroundService)
+        //{
+        //    var mvxApplication = MvxAndroidApplication.Instance;
+        //    var appLifecycleObserver = new ApplicationLifecycleObserver(backgroundService);
+        //    mvxApplication.RegisterActivityLifecycleCallbacks(appLifecycleObserver);
+        //    mvxApplication.RegisterComponentCallbacks(appLifecycleObserver);
+        //}
     }
 }

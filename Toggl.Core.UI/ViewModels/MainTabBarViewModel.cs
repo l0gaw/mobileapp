@@ -1,9 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Reactive.Linq;
-using System.Threading.Tasks;
 using Toggl.Core.UI.Navigation;
-using MvvmCross.ViewModels;
 using Toggl.Core.Analytics;
 using Toggl.Core.DataSources;
 using Toggl.Core.Diagnostics;
@@ -16,7 +14,6 @@ using Toggl.Core.Services;
 using Toggl.Core.Suggestions;
 using Toggl.Core.Sync;
 using Toggl.Shared;
-using Toggl.Shared.Extensions;
 using Toggl.Storage.Settings;
 
 namespace Toggl.Core.UI.ViewModels
@@ -35,7 +32,7 @@ namespace Toggl.Core.UI.ViewModels
 
         private bool hasOpenedReports = false;
 
-        public IList<MvxViewModel> Tabs { get; }
+        public IList<ViewModel> Tabs { get; }
 
         public MainTabBarViewModel(
             ITimeService timeService,
@@ -156,13 +153,12 @@ namespace Toggl.Core.UI.ViewModels
             Tabs = getViewModels().ToList();
         }
 
-        public override async Task Initialize()
+        public override void Initialize()
         {
-            await base.Initialize();
-
-            await Tabs
-                .Select(vm => vm.Initialize())
-                .Apply(Task.WhenAll);
+            foreach (var tab in Tabs)
+            {
+                tab.Initialize();
+            }
         }
 
         public void StartReportsStopwatch()
@@ -175,7 +171,7 @@ namespace Toggl.Core.UI.ViewModels
             }
         }
 
-        private IEnumerable<MvxViewModel> getViewModels()
+        private IEnumerable<ViewModel> getViewModels()
         {
             yield return mainViewModel;
             yield return reportsViewModel;

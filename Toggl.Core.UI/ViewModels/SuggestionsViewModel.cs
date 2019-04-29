@@ -50,10 +50,8 @@ namespace Toggl.Core.UI.ViewModels
             this.rxActionFactory = rxActionFactory;
         }
 
-        public override async Task Initialize()
+        public override void Initialize()
         {
-            await base.Initialize();
-
             StartTimeEntry = rxActionFactory.FromAsync<Suggestion>(suggestion => startTimeEntry(suggestion));
 
             Suggestions = interactorFactory.ObserveWorkspaceOrTimeEntriesChanges().Execute()

@@ -35,7 +35,7 @@ namespace Toggl.Core.UI.ViewModels
             CloseCommand = rxActionFactory.FromAsync(close);
         }
 
-        public override void Prepare(DateTimePickerParameters parameter)
+        public override void Initialize(DateTimePickerParameters parameter)
         {
             Mode = parameter.Mode;
             MinDate = parameter.MinDate;
@@ -68,8 +68,8 @@ namespace Toggl.Core.UI.ViewModels
             return result.Clamp(MinDate, MaxDate);
         }
 
-        private Task close() => navigationService.Close(this, defaultResult);
+        private Task close() => CloseView(defaultResult);
 
-        private Task save() => navigationService.Close(this, CurrentDateTime.Value);
+        private Task save() => CloseView(CurrentDateTime.Value);
     }
 }

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reactive;
@@ -14,7 +15,7 @@ using Toggl.Storage.Settings;
 namespace Toggl.Core.UI.ViewModels.Settings
 {
     [Preserve(AllMembers = true)]
-    public sealed class UpcomingEventsNotificationSettingsViewModel : ViewModelWithOutput<Unit>
+    public sealed class UpcomingEventsNotificationSettingsViewModel : ViewModel
     {
         private readonly INavigationService navigationService;
         private readonly IUserPreferences userPreferences;
@@ -54,15 +55,15 @@ namespace Toggl.Core.UI.ViewModels.Settings
             Close = rxActionFactory.FromAsync(close);
         }
 
-        public override async Task Initialize()
+        public override void Initialize()
         {
-            await base.Initialize();
-            var selectedOption = await userPreferences.CalendarNotificationsSettings().FirstAsync();
-            AvailableOptions.ForEach(opt => opt.Selected = opt.Option == selectedOption);
+            userPreferences.CalendarNotificationsSettings().FirstAsync()
+                .Subscribe(selectedOption =>
+                    AvailableOptions.ForEach(opt => opt.Selected = opt.Option == selectedOption));
         }
 
         private Task close()
-            => navigationService.Close(this, Unit.Default);
+            => CloseView();
 
         private void onSelectOption(SelectableCalendarNotificationsOptionViewModel selectableOption)
         {
@@ -73,7 +74,7 @@ namespace Toggl.Core.UI.ViewModels.Settings
             if (enabled)
                 userPreferences.SetTimeSpanBeforeCalendarNotifications(selectableOption.Option.Duration());
 
-            navigationService.Close(this, Unit.Default);
+            CloseView();
         }
 
         private SelectableCalendarNotificationsOptionViewModel toSelectableOption(CalendarNotificationsOption option)

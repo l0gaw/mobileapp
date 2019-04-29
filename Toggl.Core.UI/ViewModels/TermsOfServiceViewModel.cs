@@ -31,7 +31,7 @@ namespace Toggl.Core.UI.ViewModels
 
             ViewPrivacyPolicy = rxActionFactory.FromAction(() => openUrl(privacyPolicyUrl));
             ViewTermsOfService = rxActionFactory.FromAction(() => openUrl(termsOfServiceUrl));
-            Close = rxActionFactory.FromAsync<bool>(result => navigationService.Close(this, result));
+            Close = rxActionFactory.FromAsync<bool>(result => CloseView(result));
         }
 
         private void openUrl(string url)
