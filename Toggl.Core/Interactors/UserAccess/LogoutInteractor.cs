@@ -64,7 +64,6 @@ namespace Toggl.Core.Interactors.UserAccess
                 .Do(shortcutCreator.OnLogout)
                 .Do(userPreferences.Reset)
                 .Do(privateSharedStorageService.ClearAll)
-                //.Do(intentDonationService.ClearAll)
                 .Do(_ => analyticsService.Logout.Track(source))
                 .SelectMany(_ =>
                     notificationService
