@@ -147,6 +147,10 @@ namespace Toggl.iOS.ViewControllers
                 .Subscribe(ViewModel.ContinueTimeEntry.Inputs)
                 .DisposedBy(DisposeBag);
 
+            ViewModel.ContinueTimeEntry.Elements
+                .Subscribe(IosDependencyContainer.Instance.IntentDonationService.DonateStartTimeEntry)
+                .DisposedBy(DisposeBag);
+
             tableViewSource.SwipeToDelete
                 .Select(logItem => logItem.RepresentedTimeEntriesIds)
                 .Subscribe(ViewModel.TimeEntriesViewModel.DelayDeleteTimeEntries.Inputs)
