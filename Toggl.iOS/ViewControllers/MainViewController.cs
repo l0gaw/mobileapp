@@ -147,10 +147,6 @@ namespace Toggl.iOS.ViewControllers
                 .Subscribe(ViewModel.ContinueTimeEntry.Inputs)
                 .DisposedBy(DisposeBag);
 
-            ViewModel.ContinueTimeEntry.Elements
-                .Subscribe(IosDependencyContainer.Instance.IntentDonationService.DonateStartTimeEntry)
-                .DisposedBy(DisposeBag);
-
             tableViewSource.SwipeToDelete
                 .Select(logItem => logItem.RepresentedTimeEntriesIds)
                 .Subscribe(ViewModel.TimeEntriesViewModel.DelayDeleteTimeEntries.Inputs)
@@ -171,11 +167,6 @@ namespace Toggl.iOS.ViewControllers
 
             tableViewSource.SwipeToDelete
                 .Subscribe(_ => swipeLeftStep.Dismiss())
-                .DisposedBy(disposeBag);
-
-            // Intent Donation
-            ViewModel.DefaultWorkspace
-                .Subscribe(IosDependencyContainer.Instance.IntentDonationService.SetDefaultShortcutSuggestions)
                 .DisposedBy(disposeBag);
 
             // Refresh Control
@@ -283,6 +274,18 @@ namespace Toggl.iOS.ViewControllers
             ViewModel.SuggestionsViewModel.Suggestions
                 .ReemitWhen(traitCollectionSubject)
                 .Subscribe(suggestionsView.OnSuggestions)
+                .DisposedBy(DisposeBag);
+
+            // Intent Donation
+            ViewModel.DefaultWorkspace
+                .Subscribe(IosDependencyContainer.Instance.IntentDonationService.SetDefaultShortcutSuggestions)
+                .DisposedBy(disposeBag);
+
+            Observable.Merge(
+                    ViewModel.ContinueTimeEntry.Elements,
+                    ViewModel.SuggestionsViewModel.StartTimeEntry.Elements
+                )
+                .Subscribe(IosDependencyContainer.Instance.IntentDonationService.DonateStartTimeEntry)
                 .DisposedBy(DisposeBag);
 
             View.SetNeedsLayout();
