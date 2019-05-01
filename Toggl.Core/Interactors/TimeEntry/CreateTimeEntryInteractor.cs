@@ -62,7 +62,7 @@ namespace Toggl.Core.Interactors
                 .SelectMany(dataSource.TimeEntries.Create)
                 .Do(notifyOfNewTimeEntryIfPossible)
                 .Do(syncManager.InitiatePushSync)
-                .Do(te => intentDonationService.DonateStartTimeEntry(te.Workspace, te))
+                //.Do(te => intentDonationService.DonateStartTimeEntry(te.Workspace, te))
                 .Track(StartTimeEntryEvent.With(origin), analyticsService);
 
         private TimeEntry userFromPrototype(IThreadSafeUser user)
