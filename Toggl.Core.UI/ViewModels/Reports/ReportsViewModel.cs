@@ -232,7 +232,6 @@ namespace Toggl.Core.UI.ViewModels.Reports
             {
                 navigationService.Navigate(calendarViewModel);
                 didNavigateToCalendar = true;
-                intentDonationService.DonateShowReport();
                 return;
             }
 
