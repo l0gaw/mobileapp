@@ -78,6 +78,7 @@ namespace Toggl.Core.UI.ViewModels
         public IObservable<bool> ShouldShowStoppedTimeEntryNotification { get; private set; }
         public IObservable<IThreadSafeTimeEntry> CurrentRunningTimeEntry { get; private set; }
         public IObservable<bool> ShouldShowRatingView { get; private set; }
+        public IObservable<IThreadSafeWorkspace> DefaultWorkspace { get; private set; }
 
         public IObservable<IEnumerable<MainLogSection>> TimeEntries => TimeEntriesViewModel.TimeEntries
             .Throttle(TimeSpan.FromSeconds(throttlePeriodInSeconds))
@@ -157,6 +158,11 @@ namespace Toggl.Core.UI.ViewModels
             TimeEntriesCount = TimeEntriesViewModel.Count.AsDriver(schedulerProvider);
 
             ratingViewExperiment = new RatingViewExperiment(timeService, dataSource, onboardingStorage, remoteConfigService);
+
+            DefaultWorkspace = interactorFactory.GetDefaultWorkspace()
+                .TrackException<InvalidOperationException, IThreadSafeWorkspace>("MainViewModel.Constructor")
+                .Execute()
+                .AsDriver(schedulerProvider);
         }
 
         public void Init(string action, string description)
@@ -284,12 +290,6 @@ namespace Toggl.Core.UI.ViewModels
             onboardingStorage.StopButtonWasTappedBefore
                              .Subscribe(hasBeen => hasStopButtonEverBeenUsed = hasBeen)
                              .DisposedBy(disposeBag);
-
-            interactorFactory.GetDefaultWorkspace()
-                .TrackException<InvalidOperationException, IThreadSafeWorkspace>("MainViewModel.Initialize")
-                .Execute()
-                .Subscribe(intentDonationService.SetDefaultShortcutSuggestions)
-                .DisposedBy(disposeBag);
         }
 
         public void Track(ITrackableEvent e)
@@ -475,12 +475,13 @@ namespace Toggl.Core.UI.ViewModels
         private async Task stopTimeEntry(TimeEntryStopOrigin origin)
         {
             OnboardingStorage.StopButtonWasTapped();
-
+/*
             await interactorFactory
                 .StopTimeEntry(TimeService.CurrentDateTime, origin)
                 .Execute()
                 .Do(_ => intentDonationService.DonateStopCurrentTimeEntry())
                 .Do(syncManager.InitiatePushSync);
+                */
         }
 
         private Task navigate<TModel, TParameters>(TParameters value)

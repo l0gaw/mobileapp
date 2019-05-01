@@ -169,6 +169,11 @@ namespace Toggl.iOS.ViewControllers
                 .Subscribe(_ => swipeLeftStep.Dismiss())
                 .DisposedBy(disposeBag);
 
+            // Intent Donation
+            ViewModel.DefaultWorkspace
+                .Subscribe(IosDependencyContainer.Instance.IntentDonationService.SetDefaultShortcutSuggestions)
+                .DisposedBy(disposeBag);
+
             // Refresh Control
             var refreshControl = new RefreshControl(
                 ViewModel.SyncProgressState,
