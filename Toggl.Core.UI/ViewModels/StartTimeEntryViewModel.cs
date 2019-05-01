@@ -94,7 +94,7 @@ namespace Toggl.Core.UI.ViewModels
         public IOnboardingStorage OnboardingStorage { get; }
 
         public OutputAction<bool> Close { get; }
-        public UIAction Done { get; }
+        public RxAction<Unit, IThreadSafeTimeEntry> Done { get; }
         public UIAction DurationTapped { get; }
         public UIAction ToggleBillable { get; }
         public UIAction SetStartDate { get; }
@@ -157,7 +157,7 @@ namespace Toggl.Core.UI.ViewModels
                 .AsDriver(schedulerProvider);
 
             Close = rxActionFactory.FromAsync(close);
-            Done = rxActionFactory.FromObservable(done);
+            Done = rxActionFactory.FromObservable<Unit, IThreadSafeTimeEntry>(_ => done());
             DurationTapped = rxActionFactory.FromAction(durationTapped);
             ToggleBillable = rxActionFactory.FromAction(toggleBillable);
             SetStartDate = rxActionFactory.FromAsync(setStartDate);
@@ -530,7 +530,7 @@ namespace Toggl.Core.UI.ViewModels
             }
         }
 
-        private IObservable<Unit> done()
+        private IObservable<IThreadSafeTimeEntry> done()
         {
             var timeEntry = textFieldInfo.Value.AsTimeEntryPrototype(startTime, duration, isBillable.Value);
             var origin = duration.HasValue ? TimeEntryStartOrigin.Manual : TimeEntryStartOrigin.Timer;
@@ -538,9 +538,9 @@ namespace Toggl.Core.UI.ViewModels
             {
                 origin = paramOrigin;
             }
+
             return interactorFactory.CreateTimeEntry(timeEntry, origin).Execute()
-                .Do(_ => navigationService.Close(this))
-                .SelectUnit();
+                .Do(_ => navigationService.Close(this));
         }
 
         private void onParsedQuery(QueryInfo parsedQuery)

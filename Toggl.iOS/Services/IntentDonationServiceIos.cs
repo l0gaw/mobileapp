@@ -8,6 +8,7 @@ using Intents;
 using Toggl.Core;
 using Toggl.Core.Analytics;
 using Toggl.Core.DataSources;
+using Toggl.Core.Models.Interfaces;
 using Toggl.Shared.Models;
 using Toggl.Core.Services;
 using Toggl.iOS.Intents;
@@ -39,7 +40,7 @@ namespace Toggl.iOS.Services
             setupDefaultShortcuts(workspace);
         }
 
-        public async Task DonateStartTimeEntry(IWorkspace workspace, ITimeEntry timeEntry)
+        public void DonateStartTimeEntry(IThreadSafeTimeEntry timeEntry)
         {
             if (!UIDevice.CurrentDevice.CheckSystemVersion(12, 0))
             {
@@ -49,9 +50,7 @@ namespace Toggl.iOS.Services
             var relevantShortcuts = new List<INRelevantShortcut>();
 
             var startTimerIntent = new StartTimerIntent();
-            var startTimerWithClipboardIntent = new StartTimerFromClipboardIntent();
-            startTimerIntent.Workspace = new INObject(workspace.Id.ToString(), workspace.Name);
-            startTimerWithClipboardIntent.Workspace = new INObject(workspace.Id.ToString(), workspace.Name);
+            startTimerIntent.Workspace = new INObject(timeEntry.Workspace.Id.ToString(), timeEntry.Workspace.Name);
 
             if (!string.IsNullOrEmpty(timeEntry.Description))
             {
@@ -63,29 +62,21 @@ namespace Toggl.iOS.Services
 
                 if (timeEntry.ProjectId is long projectId)
                 {
-                    // TODO
-                    /*
-                    var project = await dataSource.Projects.GetById(projectId).FirstAsync();
-                    var projectINObject = new INObject(projectId.ToString(), project.Name);
+                    var projectINObject = new INObject(timeEntry.ProjectId.ToString(), timeEntry.Project.Name);
                     startTimerIntent.ProjectId = projectINObject;
-                    startTimerWithClipboardIntent.ProjectId = projectINObject;
-                    */
                 }
 
                 startTimerIntent.EntryDescription = timeEntry.Description;
 
                 var tags = timeEntry.TagIds.Select(tag => new INObject(tag.ToString(), tag.ToString())).ToArray();
                 startTimerIntent.Tags = tags;
-                startTimerWithClipboardIntent.Tags = tags;
 
                 var billable = new INObject(timeEntry.Billable.ToString(), timeEntry.Billable.ToString());
                 startTimerIntent.Billable = billable;
-                startTimerWithClipboardIntent.Billable = billable;
                 startTimerIntent.SuggestedInvocationPhrase = $"Track {timeEntry.Description}";
 
                 // Relevant shortcut for the Siri Watch Face
                 relevantShortcuts.Add(createRelevantShortcut(startTimerIntent));
-                relevantShortcuts.Add(createRelevantShortcut(startTimerWithClipboardIntent));
             }
             else
             {
@@ -95,12 +86,9 @@ namespace Toggl.iOS.Services
             var startTimerInteraction = new INInteraction(startTimerIntent, null);
             startTimerInteraction.DonateInteraction(trackError);
 
-            var startTimerFromClipboardInteraction = new INInteraction(startTimerWithClipboardIntent, null);
-            startTimerFromClipboardInteraction.DonateInteraction(trackError);
-
             // Descriptionless Relevant Shortcut. Always added even if the intent has one
             var descriptionlessIntent = new StartTimerIntent();
-            descriptionlessIntent.Workspace = new INObject(workspace.Id.ToString(), workspace.Name);
+            descriptionlessIntent.Workspace = new INObject(timeEntry.Workspace.Id.ToString(), timeEntry.Workspace.Name);
             var descriptionlessShortcut = createRelevantShortcut(descriptionlessIntent);
             relevantShortcuts.Add(descriptionlessShortcut);
 
