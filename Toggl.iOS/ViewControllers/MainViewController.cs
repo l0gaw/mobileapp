@@ -7,6 +7,7 @@ using System.Reactive.Subjects;
 using System.Threading;
 using CoreGraphics;
 using Foundation;
+using MvvmCross.WeakSubscription;
 using Toggl.Core;
 using Toggl.Core.Analytics;
 using Toggl.Core.Extensions;
@@ -286,6 +287,10 @@ namespace Toggl.iOS.ViewControllers
                     ViewModel.SuggestionsViewModel.StartTimeEntry.Elements
                 )
                 .Subscribe(IosDependencyContainer.Instance.IntentDonationService.DonateStartTimeEntry)
+                .DisposedBy(DisposeBag);
+
+            ViewModel.StopTimeEntry.Elements
+                .Subscribe(IosDependencyContainer.Instance.IntentDonationService.DonateStopCurrentTimeEntry)
                 .DisposedBy(DisposeBag);
 
             View.SetNeedsLayout();

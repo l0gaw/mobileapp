@@ -260,7 +260,7 @@ namespace Toggl.Core.UI.ViewModels
             SelectTimeEntry = rxActionFactory.FromAsync<(long[], EditTimeEntryOrigin)>(timeEntrySelected);
             ContinueTimeEntry = rxActionFactory.FromObservable<(long, ContinueTimeEntryMode), IThreadSafeTimeEntry>(continueTimeEntry);
             StartTimeEntry = rxActionFactory.FromAsync<bool>(startTimeEntry, IsTimeEntryRunning.Invert());
-            StopTimeEntry = rxActionFactory.FromAsync<TimeEntryStopOrigin>(stopTimeEntry, IsTimeEntryRunning);
+            StopTimeEntry = rxActionFactory.FromObservable<TimeEntryStopOrigin>(stopTimeEntry, IsTimeEntryRunning);
 
             switch (urlNavigationAction)
             {
@@ -472,16 +472,15 @@ namespace Toggl.Core.UI.ViewModels
             await syncManager.ForceFullSync();
         }
 
-        private async Task stopTimeEntry(TimeEntryStopOrigin origin)
+        private IObservable<Unit> stopTimeEntry(TimeEntryStopOrigin origin)
         {
             OnboardingStorage.StopButtonWasTapped();
-/*
-            await interactorFactory
+
+            return interactorFactory
                 .StopTimeEntry(TimeService.CurrentDateTime, origin)
                 .Execute()
-                .Do(_ => intentDonationService.DonateStopCurrentTimeEntry())
-                .Do(syncManager.InitiatePushSync);
-                */
+                .Do(syncManager.InitiatePushSync)
+                .SelectUnit();
         }
 
         private Task navigate<TModel, TParameters>(TParameters value)
