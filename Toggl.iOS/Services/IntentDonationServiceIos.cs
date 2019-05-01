@@ -18,17 +18,15 @@ namespace Toggl.iOS.Services
     public class IntentDonationServiceIos : IIntentDonationService
     {
         private IAnalyticsService analyticsService;
-        private readonly ITogglDataSource dataSource;
 
         private INRelevanceProvider[] startTimerRelevanceProviders = {
             new INDailyRoutineRelevanceProvider(INDailyRoutineSituation.Work),
             new INDailyRoutineRelevanceProvider(INDailyRoutineSituation.Gym),
             new INDailyRoutineRelevanceProvider(INDailyRoutineSituation.School)
         };
-        public IntentDonationServiceIos(IAnalyticsService analyticsService, ITogglDataSource dataSource)
+        public IntentDonationServiceIos(IAnalyticsService analyticsService)
         {
             this.analyticsService = analyticsService;
-            this.dataSource = dataSource;
         }
 
         public void SetDefaultShortcutSuggestions(IWorkspace workspace)
@@ -65,10 +63,13 @@ namespace Toggl.iOS.Services
 
                 if (timeEntry.ProjectId is long projectId)
                 {
+                    // TODO
+                    /*
                     var project = await dataSource.Projects.GetById(projectId).FirstAsync();
                     var projectINObject = new INObject(projectId.ToString(), project.Name);
                     startTimerIntent.ProjectId = projectINObject;
                     startTimerWithClipboardIntent.ProjectId = projectINObject;
+                    */
                 }
 
                 startTimerIntent.EntryDescription = timeEntry.Description;

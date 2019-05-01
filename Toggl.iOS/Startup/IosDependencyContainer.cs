@@ -47,6 +47,7 @@ namespace Toggl.iOS
             : base(environment, new UserAgent(platform.ToString(), version))
         {
             ViewPresenter = viewPresenter;
+            IntentDonationService = new IntentDonationServiceIos(AnalyticsService);
 
             var appVersion = Version.Parse(version);
 
@@ -73,9 +74,6 @@ namespace Toggl.iOS
 
         protected override IGoogleService CreateGoogleService()
             => new GoogleServiceIos();
-
-        protected override IIntentDonationService CreateIntentDonationService()
-            => new IntentDonationServiceIos(AnalyticsService, DataSource);
 
         protected override IKeyValueStorage CreateKeyValueStorage()
             => new UserDefaultsStorageIos();
