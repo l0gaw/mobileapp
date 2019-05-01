@@ -55,7 +55,6 @@ namespace Toggl.Core.UI.ViewModels
         private readonly IInteractorFactory interactorFactory;
         private readonly IStopwatchProvider stopwatchProvider;
         private readonly INavigationService navigationService;
-        private readonly IIntentDonationService intentDonationService;
         private readonly IAccessRestrictionStorage accessRestrictionStorage;
         private readonly IRxActionFactory rxActionFactory;
         private readonly ISchedulerProvider schedulerProvider;
@@ -115,7 +114,6 @@ namespace Toggl.Core.UI.ViewModels
             INavigationService navigationService,
             IRemoteConfigService remoteConfigService,
             ISuggestionProviderContainer suggestionProviders,
-            IIntentDonationService intentDonationService,
             IAccessRestrictionStorage accessRestrictionStorage,
             ISchedulerProvider schedulerProvider,
             IStopwatchProvider stopwatchProvider,
@@ -134,7 +132,6 @@ namespace Toggl.Core.UI.ViewModels
             Ensure.Argument.IsNotNull(stopwatchProvider, nameof(stopwatchProvider));
             Ensure.Argument.IsNotNull(remoteConfigService, nameof(remoteConfigService));
             Ensure.Argument.IsNotNull(suggestionProviders, nameof(suggestionProviders));
-            Ensure.Argument.IsNotNull(intentDonationService, nameof(intentDonationService));
             Ensure.Argument.IsNotNull(accessRestrictionStorage, nameof(accessRestrictionStorage));
             Ensure.Argument.IsNotNull(rxActionFactory, nameof(rxActionFactory));
 
@@ -146,7 +143,6 @@ namespace Toggl.Core.UI.ViewModels
             this.navigationService = navigationService;
             this.onboardingStorage = onboardingStorage;
             this.schedulerProvider = schedulerProvider;
-            this.intentDonationService = intentDonationService;
             this.accessRestrictionStorage = accessRestrictionStorage;
             this.stopwatchProvider = stopwatchProvider;
             this.rxActionFactory = rxActionFactory;

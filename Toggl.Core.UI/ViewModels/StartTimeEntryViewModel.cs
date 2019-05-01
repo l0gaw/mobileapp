@@ -43,7 +43,6 @@ namespace Toggl.Core.UI.ViewModels
         private readonly INavigationService navigationService;
         private readonly IAnalyticsService analyticsService;
         private readonly ISchedulerProvider schedulerProvider;
-        private readonly IIntentDonationService intentDonationService;
         private readonly IStopwatchProvider stopwatchProvider;
 
         private readonly CompositeDisposable disposeBag = new CompositeDisposable();
@@ -120,7 +119,6 @@ namespace Toggl.Core.UI.ViewModels
             INavigationService navigationService,
             IAnalyticsService analyticsService,
             ISchedulerProvider schedulerProvider,
-            IIntentDonationService intentDonationService,
             IStopwatchProvider stopwatchProvider,
             IRxActionFactory rxActionFactory
         )
@@ -134,7 +132,6 @@ namespace Toggl.Core.UI.ViewModels
             Ensure.Argument.IsNotNull(navigationService, nameof(navigationService));
             Ensure.Argument.IsNotNull(analyticsService, nameof(analyticsService));
             Ensure.Argument.IsNotNull(schedulerProvider, nameof(schedulerProvider));
-            Ensure.Argument.IsNotNull(intentDonationService, nameof(intentDonationService));
             Ensure.Argument.IsNotNull(stopwatchProvider, nameof(stopwatchProvider));
             Ensure.Argument.IsNotNull(rxActionFactory, nameof(rxActionFactory));
 
@@ -145,7 +142,6 @@ namespace Toggl.Core.UI.ViewModels
             this.interactorFactory = interactorFactory;
             this.analyticsService = analyticsService;
             this.schedulerProvider = schedulerProvider;
-            this.intentDonationService = intentDonationService;
             this.stopwatchProvider = stopwatchProvider;
 
             DataSource = dataSource;
@@ -160,7 +156,7 @@ namespace Toggl.Core.UI.ViewModels
                 .Select(time => time.ToFormattedString(DurationFormat.Improved))
                 .AsDriver(schedulerProvider);
 
-            Close = rxActionFactory.FromAsync(close); 
+            Close = rxActionFactory.FromAsync(close);
             Done = rxActionFactory.FromObservable(done);
             DurationTapped = rxActionFactory.FromAction(durationTapped);
             ToggleBillable = rxActionFactory.FromAction(toggleBillable);
