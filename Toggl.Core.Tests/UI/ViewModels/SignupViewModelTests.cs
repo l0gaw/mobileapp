@@ -14,6 +14,7 @@ using Toggl.Core.Exceptions;
 using Toggl.Core.Interactors;
 using Toggl.Core.UI;
 using Toggl.Core.UI.Parameters;
+using Toggl.Core.UI.Navigation;
 using Toggl.Core.UI.ViewModels;
 using Toggl.Core.Tests.Generators;
 using Toggl.Shared;
@@ -28,8 +29,10 @@ namespace Toggl.Core.Tests.UI.ViewModels
 {
     public sealed class SignupViewModelTests
     {
-        public abstract class SignupViewModelTest : BaseViewModelTests<SignupViewModel>
+        public abstract class SignupViewModelTest : BaseViewModelWithInputTests<SignupViewModel, CredentialsParameter>
         {
+            protected CredentialsParameter DefaultParameters { get; } = CredentialsParameter.Empty;
+
             protected Email ValidEmail { get; } = Email.From("susancalvin@psychohistorian.museum");
             protected Email InvalidEmail { get; } = Email.From("foo@");
 
@@ -117,10 +120,44 @@ namespace Toggl.Core.Tests.UI.ViewModels
 
         public sealed class TheInitializeMethod : SignupViewModelTest
         {
+            [FsCheck.Xunit.Property]
+            public void SetsTheEmail(NonEmptyString emailString)
+            {
+                var viewModel = CreateViewModel();
+                var email = Email.From(emailString.Get);
+                var password = Password.Empty;
+                var parameter = CredentialsParameter.With(email, password);
+                var expectedValues = new[] { Email.Empty.ToString(), email.TrimmedEnd().ToString() }.Distinct();
+                var actualValues = new List<string>();
+                viewModel.Email.Subscribe(actualValues.Add);
+
+                viewModel.Initialize(parameter);
+
+                TestScheduler.Start();
+                CollectionAssert.AreEqual(expectedValues, actualValues);
+            }
+
+            [FsCheck.Xunit.Property]
+            public void SetsThePassword(NonEmptyString passwordString)
+            {
+                var viewModel = CreateViewModel();
+                var email = Email.Empty;
+                var password = Password.From(passwordString.Get);
+                var parameter = CredentialsParameter.With(email, password);
+                var expectedValues = new[] { Password.Empty.ToString(), password.ToString() };
+                var actualValues = new List<string>();
+                viewModel.Password.Subscribe(actualValues.Add);
+
+                viewModel.Initialize(parameter);
+
+                TestScheduler.Start();
+                CollectionAssert.AreEqual(expectedValues, actualValues);
+            }
+
             [Fact, LogIfTooSlow]
             public async Task GetstheCurrentLocation()
             {
-                await ViewModel.Initialize();
+                await ViewModel.Initialize(DefaultParameters);
 
                 await Api.Location.Received().Get();
             }
@@ -131,7 +168,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
                 var observer = TestScheduler.CreateObserver<string>();
                 ViewModel.CountryButtonTitle.Subscribe(observer);
 
-                await ViewModel.Initialize();
+                await ViewModel.Initialize(DefaultParameters);
 
                 TestScheduler.Start();
                 observer.Messages.AssertEqual(
@@ -148,7 +185,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
 
                 Api.Location.Get().Returns(Observable.Throw<ILocation>(new Exception()));
 
-                await ViewModel.Initialize();
+                await ViewModel.Initialize(DefaultParameters);
 
                 TestScheduler.Start();
                 observer.Messages.AssertEqual(
@@ -164,7 +201,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
 
                 Api.Location.Get().Returns(Observable.Throw<ILocation>(new Exception()));
 
-                await ViewModel.Initialize();
+                await ViewModel.Initialize(DefaultParameters);
 
                 TestScheduler.Start();
                 observer.Messages.AssertEqual(
@@ -180,7 +217,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
             public async Task NavigatesToSelectCountryViewModelPassingNullIfLocationApiFailed()
             {
                 Api.Location.Get().Returns(Observable.Throw<ILocation>(new Exception()));
-                await ViewModel.Initialize();
+                await ViewModel.Initialize(DefaultParameters);
 
                 ViewModel.PickCountry.Execute();
 
@@ -191,7 +228,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
             [Fact, LogIfTooSlow]
             public async Task NavigatesToSelectCountryViewModelPassingCountryIdIfLocationApiSucceeded()
             {
-                await ViewModel.Initialize();
+                await ViewModel.Initialize(DefaultParameters);
                 var selectedCountryId = await new GetAllCountriesInteractor()
                     .Execute()
                     .Select(countries => countries.Single(country => country.CountryCode == Location.CountryCode))
@@ -215,7 +252,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
                 NavigationService
                     .Navigate<SelectCountryViewModel, long?, long?>(Arg.Any<long?>())
                     .Returns(selectedCountry.Id);
-                await ViewModel.Initialize();
+                await ViewModel.Initialize(DefaultParameters);
 
                 ViewModel.PickCountry.Execute();
 
@@ -237,7 +274,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
                 NavigationService
                     .Navigate<SelectCountryViewModel, long?, long?>(Arg.Any<long?>())
                     .Returns(1);
-                await ViewModel.Initialize();
+                await ViewModel.Initialize(DefaultParameters);
 
                 ViewModel.PickCountry.Execute();
 
@@ -255,7 +292,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
             protected override void AdditionalViewModelSetup()
             {
                 base.AdditionalViewModelSetup();
-                ViewModel.Initialize().Wait();
+                ViewModel.Initialize(DefaultParameters).Wait();
             }
 
             [Fact, LogIfTooSlow]
@@ -305,7 +342,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
                 protected override void AdditionalViewModelSetup()
                 {
                     base.AdditionalViewModelSetup();
-                    ViewModel.Initialize().Wait();
+                    ViewModel.Initialize(DefaultParameters).Wait();
                 }
 
                 [Fact, LogIfTooSlow]
@@ -424,7 +461,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
                     {
                         base.AdditionalViewModelSetup();
 
-                        ViewModel.Initialize().Wait();
+                        ViewModel.Initialize(DefaultParameters).Wait();
 
                         UserAccessManager
                             .SignUpWithGoogle(true, Arg.Any<int>(), Arg.Any<string>())
@@ -440,7 +477,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
 
                         var viewModel = CreateViewModel();
 
-                        viewModel.Initialize().Wait();
+                        viewModel.Initialize(DefaultParameters).Wait();
                         viewModel.GoogleSignup.Execute();
 
                         TestScheduler.Start();
@@ -454,7 +491,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
                         var observer = TestScheduler.CreateObserver<Unit>();
                         viewModel.SuccessfulSignup.Subscribe(observer);
 
-                        viewModel.Initialize().Wait();
+                        viewModel.Initialize(DefaultParameters).Wait();
                         viewModel.GoogleSignup.Execute();
 
                         TestScheduler.Start();
@@ -562,7 +599,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
                 var observer = TestScheduler.CreateObserver<ShakeTargets>();
                 ViewModel.Shake.Subscribe(observer);
 
-                await ViewModel.Initialize();
+                await ViewModel.Initialize(DefaultParameters);
 
                 ViewModel.SetEmail(ValidEmail);
                 ViewModel.SetPassword(ValidPassword);
@@ -594,7 +631,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
                     Api.Location.Get().Returns(Observable.Throw<ILocation>(new Exception()));
                 }
 
-                await ViewModel.Initialize();
+                await ViewModel.Initialize(DefaultParameters);
 
                 ViewModel.SetEmail(currentEmail);
                 ViewModel.SetPassword(currentPassword);
@@ -614,10 +651,10 @@ namespace Toggl.Core.Tests.UI.ViewModels
             {
                 base.AdditionalViewModelSetup();
 
+                ViewModel.Initialize(DefaultParameters).Wait();
+
                 ViewModel.SetEmail(ValidEmail);
                 ViewModel.SetPassword(ValidPassword);
-
-                ViewModel.Initialize().Wait();
             }
 
             [Fact, LogIfTooSlow]
@@ -673,7 +710,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
                 {
                     base.AdditionalViewModelSetup();
 
-                    ViewModel.Initialize().Wait();
+                    ViewModel.Initialize(DefaultParameters).Wait();
 
                     ViewModel.SetEmail(ValidEmail);
                     ViewModel.SetPassword(ValidPassword);
@@ -720,7 +757,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
                     {
                         base.AdditionalViewModelSetup();
 
-                        ViewModel.Initialize().Wait();
+                        ViewModel.Initialize(DefaultParameters).Wait();
 
                         ViewModel.SetEmail(ValidEmail);
                         ViewModel.SetPassword(ValidPassword);
@@ -734,7 +771,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
                     public void SavesTheTimeOfLastLogin(DateTimeOffset now)
                     {
                         var viewModel = CreateViewModel();
-                        viewModel.Initialize().Wait();
+                        viewModel.Initialize(DefaultParameters).Wait();
                         viewModel.SetEmail(ValidEmail);
                         viewModel.SetPassword(ValidPassword);
                         TimeService.CurrentDateTime.Returns(now);
@@ -752,7 +789,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
                         var observer = TestScheduler.CreateObserver<Unit>();
                         viewModel.SuccessfulSignup.Subscribe(observer);
 
-                        viewModel.Initialize().Wait();
+                        viewModel.Initialize(DefaultParameters).Wait();
                         viewModel.SetEmail(ValidEmail);
                         viewModel.SetPassword(ValidPassword);
 
@@ -776,7 +813,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
                     {
                         base.AdditionalViewModelSetup();
 
-                        ViewModel.Initialize().Wait();
+                        ViewModel.Initialize(DefaultParameters).Wait();
 
                         ViewModel.SetEmail(ValidEmail);
                         ViewModel.SetPassword(ValidPassword);
@@ -929,9 +966,9 @@ namespace Toggl.Core.Tests.UI.ViewModels
         {
             protected override void AdditionalViewModelSetup()
             {
-                base.AdditionalViewModelSetup();
+                ViewModel.Initialize(DefaultParameters).Wait();
 
-                ViewModel.Initialize().Wait();
+                base.AdditionalViewModelSetup();
             }
 
             [Fact, LogIfTooSlow]
@@ -957,18 +994,18 @@ namespace Toggl.Core.Tests.UI.ViewModels
             {
                 var observer = TestScheduler.CreateObserver<bool>();
                 ViewModel.SignupEnabled.Subscribe(observer);
-
+                
                 ViewModel.SetEmail(Email.From(email));
                 ViewModel.SetPassword(Password.From(password));
 
                 TestScheduler.Start();
                 observer.Messages.AssertEqual(
-                    ReactiveTest.OnNext(2, false)
+                    OnNext(2, false)
                 );
             }
 
             [Fact]
-            public void ReturnsFlaseWhenIsLoading()
+            public void ReturnsFalseWhenIsLoading()
             {
                 var observer = TestScheduler.CreateObserver<bool>();
                 ViewModel.SignupEnabled.Subscribe(observer);
@@ -983,46 +1020,9 @@ namespace Toggl.Core.Tests.UI.ViewModels
 
                 TestScheduler.Start();
                 observer.Messages.AssertEqual(
-                    ReactiveTest.OnNext(2, true),
-                    ReactiveTest.OnNext(3, false)
+                    OnNext(2, true),
+                    OnNext(3, false)
                 );
-            }
-        }
-
-        public sealed class ThePrepareMethod : SignupViewModelTest
-        {
-            [FsCheck.Xunit.Property]
-            public void SetsTheEmail(NonEmptyString emailString)
-            {
-                var viewModel = CreateViewModel();
-                var email = Email.From(emailString.Get);
-                var password = Password.Empty;
-                var parameter = CredentialsParameter.With(email, password);
-                var expectedValues = new[] { Email.Empty.ToString(), email.TrimmedEnd().ToString() }.Distinct();
-                var actualValues = new List<string>();
-                viewModel.Email.Subscribe(actualValues.Add);
-
-                viewModel.Prepare(parameter);
-
-                TestScheduler.Start();
-                CollectionAssert.AreEqual(expectedValues, actualValues);
-            }
-
-            [FsCheck.Xunit.Property]
-            public void SetsThePassword(NonEmptyString passwordString)
-            {
-                var viewModel = CreateViewModel();
-                var email = Email.Empty;
-                var password = Password.From(passwordString.Get);
-                var parameter = CredentialsParameter.With(email, password);
-                var expectedValues = new[] { Password.Empty.ToString(), password.ToString() };
-                var actualValues = new List<string>();
-                viewModel.Password.Subscribe(actualValues.Add);
-
-                viewModel.Prepare(parameter);
-
-                TestScheduler.Start();
-                CollectionAssert.AreEqual(expectedValues, actualValues);
             }
         }
     }

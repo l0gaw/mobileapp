@@ -17,8 +17,6 @@ namespace Toggl.Core.UI.ViewModels
     {
         private readonly IRxActionFactory rxActionFactory;
 
-        private long? selectedCountryId;
-
         private readonly INavigationService navigationService;
 
         public IObservable<IEnumerable<SelectableCountryViewModel>> Countries { get; private set; }
@@ -38,9 +36,9 @@ namespace Toggl.Core.UI.ViewModels
             Close = rxActionFactory.FromAsync(close);
         }
 
-        public override async Task Initialize()
+        public override async Task Initialize(long? selectedCountryId)
         {
-            await base.Initialize();
+            await base.Initialize(selectedCountryId);
 
             var allCountries = await new GetAllCountriesInteractor().Execute();
 
@@ -62,15 +60,10 @@ namespace Toggl.Core.UI.ViewModels
                 });
         }
 
-        public override void Prepare(long? parameter)
-        {
-            selectedCountryId = parameter;
-        }
-
         private Task close()
-            => navigationService.Close(this);
+            => Finish(null);
 
         private async Task selectCountry(SelectableCountryViewModel selectedCountry)
-            => await navigationService.Close(this, selectedCountry.Country.Id);
+            => await Finish(selectedCountry.Country.Id);
     }
 }
