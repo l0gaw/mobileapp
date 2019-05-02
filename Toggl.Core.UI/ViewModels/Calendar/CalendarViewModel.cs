@@ -276,12 +276,12 @@ namespace Toggl.Core.UI.ViewModels.Calendar
 
         private async Task linkCalendars(bool isOnboarding)
         {
-            var calendarPermissionGranted = await permissionsService.RequestCalendarAuthorization();
+            var calendarPermissionGranted = await this.SelectPermissionService(permissionsService).RequestCalendarAuthorization();
             hasCalendarsLinkedSubject.OnNext(calendarPermissionGranted);
             if (calendarPermissionGranted)
             {
                 await selectUserCalendars(isOnboarding);
-                var notificationPermissionGranted = await permissionsService.RequestNotificationAuthorization();
+                var notificationPermissionGranted = await this.SelectPermissionService(permissionsService).RequestNotificationAuthorization();
                 userPreferences.SetCalendarNotificationsEnabled(notificationPermissionGranted);
             }
             else
