@@ -9,5 +9,11 @@ namespace Toggl.Core.UI.ViewModels
         {
             return viewModel.View ?? injectedDialogService;
         }
+
+        public static IPermissionRequester SelectPermissionService(this IViewModel viewModel,
+            IPermissionRequester injectedPermissionsService)
+        {
+            return viewModel.View ?? injectedPermissionsService;
+        }
     }
 }
