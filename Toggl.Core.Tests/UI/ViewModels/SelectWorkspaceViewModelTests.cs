@@ -8,6 +8,7 @@ using NSubstitute;
 using Toggl.Core.Models.Interfaces;
 using Toggl.Core.UI.ViewModels;
 using Toggl.Core.Tests.Generators;
+using Toggl.Core.Tests.TestExtensions;
 using Toggl.Shared.Extensions;
 using Xunit;
 
@@ -15,7 +16,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
 {
     public sealed class SelectWorkspaceViewModelTests
     {
-        public abstract class SelectWorkspaceViewModelTest : BaseViewModelTests<SelectWorkspaceViewModel>
+        public abstract class SelectWorkspaceViewModelTest : BaseViewModelTests<SelectWorkspaceViewModel, long, long>
         {
             protected override SelectWorkspaceViewModel CreateViewModel()
                 => new SelectWorkspaceViewModel(InteractorFactory, NavigationService, RxActionFactory);
@@ -65,9 +66,8 @@ namespace Toggl.Core.Tests.UI.ViewModels
             {
                 const long expectedId = 8;
 
-                ViewModel.Prepare(expectedId);
+                await ViewModel.Initialize(expectedId);
 
-                await ViewModel.Initialize();
                 ViewModel.Workspaces.Single(x => x.Selected).WorkspaceId.Should().Be(expectedId);
             }
         }
@@ -91,7 +91,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
 
                 InteractorFactory.GetAllWorkspaces().Execute().Returns(Observable.Return(workspaces));
 
-                await ViewModel.Initialize();
+                await ViewModel.Initialize(1);
 
                 ViewModel.Workspaces.Should().HaveCount(eligibleWorkspaces.Count());
             }
@@ -102,25 +102,22 @@ namespace Toggl.Core.Tests.UI.ViewModels
             [Fact, LogIfTooSlow]
             public async Task ClosesTheViewModel()
             {
-                await ViewModel.Initialize();
+                await ViewModel.Initialize(1);
 
                 ViewModel.Close.Execute();
 
-                await NavigationService.Received()
-                    .Close(Arg.Is(ViewModel), Arg.Any<long>());
+                await View.Received().Close();
             }
 
             [Fact, LogIfTooSlow]
             public async Task ReturnsTheWorkspacePassedOnPrepare()
             {
                 const long expectedId = 10;
-                ViewModel.Prepare(expectedId);
-                await ViewModel.Initialize();
+                await ViewModel.Initialize(expectedId);
 
                 ViewModel.Close.Execute();
 
-                await NavigationService.Received()
-                    .Close(Arg.Is(ViewModel), expectedId);
+                (await ViewModel.ReturnedValue()).Should().Be(expectedId);
             }
         }
 
@@ -135,8 +132,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
 
                 ViewModel.SelectWorkspace.Execute(selectableWorkspace);
 
-                await NavigationService.Received()
-                    .Close(Arg.Is(ViewModel), Arg.Any<long>());
+                await View.Received().Close();
             }
 
             [Fact, LogIfTooSlow]
@@ -149,10 +145,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
 
                 ViewModel.SelectWorkspace.Execute(selectableWorkspace);
 
-                await NavigationService.Received().Close(
-                    Arg.Is(ViewModel),
-                    Arg.Is(expectedId)
-                );
+                (await ViewModel.ReturnedValue()).Should().Be(expectedId);
             }
         }
     }

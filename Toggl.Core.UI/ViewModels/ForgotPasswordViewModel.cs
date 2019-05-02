@@ -11,6 +11,7 @@ using Toggl.Core.Services;
 using Toggl.Shared;
 using Toggl.Shared.Extensions;
 using Toggl.Networking.Exceptions;
+using System.Threading.Tasks;
 
 namespace Toggl.Core.UI.ViewModels
 {
@@ -70,9 +71,11 @@ namespace Toggl.Core.UI.ViewModels
                 .StartWith(false);
         }
 
-        public override void Prepare(EmailParameter parameter)
+        public override Task Initialize(EmailParameter parameter)
         {
             Email.OnNext(parameter.Email);
+
+            return base.Initialize(parameter);
         }
 
         private IObservable<Unit> reset()
@@ -90,7 +93,7 @@ namespace Toggl.Core.UI.ViewModels
 
         private void returnEmail()
         {
-            navigationService.Close(this, EmailParameter.With(Email.Value));
+            Finish(EmailParameter.With(Email.Value)).Wait();
         }
 
         private string toErrorString(Exception exception)

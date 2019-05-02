@@ -167,12 +167,14 @@ namespace Toggl.Core.UI.ViewModels
                     && name.LengthInBytes() <= Constants.MaxProjectNameLengthInBytes;
         }
 
-        public override void Prepare(string parameter)
+        public override Task Initialize(string name)
         {
-            Name.Accept(parameter);
+            Name.Accept(name);
 
             navigationFromStartTimeEntryViewModelStopwatch = stopwatchProvider.Get(MeasuredOperation.OpenCreateProjectViewFromStartTimeEntryView);
             stopwatchProvider.Remove(MeasuredOperation.OpenCreateProjectViewFromStartTimeEntryView);
+
+            return base.Initialize(name);
         }
 
         public override void ViewAppeared()
@@ -183,7 +185,7 @@ namespace Toggl.Core.UI.ViewModels
         }
 
         private Task close()
-            => navigationService.Close(this, null);
+            => Finish(null);
 
         private IObservable<IThreadSafeWorkspace> pickWorkspace()
         {
@@ -258,7 +260,7 @@ namespace Toggl.Core.UI.ViewModels
                         : getDto(workspace)
                             .SelectMany(dto => interactorFactory.CreateProject(dto).Execute())
                             .SelectMany(createdProject =>
-                                navigationService.Close(this, createdProject.Id).ToObservable())
+                                Finish(createdProject.Id).ToObservable())
                             .SelectUnit()
                     )
                 );

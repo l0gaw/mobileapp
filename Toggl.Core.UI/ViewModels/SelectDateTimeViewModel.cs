@@ -35,12 +35,14 @@ namespace Toggl.Core.UI.ViewModels
             CloseCommand = rxActionFactory.FromAsync(close);
         }
 
-        public override void Prepare(DateTimePickerParameters parameter)
+        public override Task Initialize(DateTimePickerParameters dateTimePicker)
         {
-            Mode = parameter.Mode;
-            MinDate = parameter.MinDate;
-            MaxDate = parameter.MaxDate;
-            CurrentDateTime = new BehaviorRelay<DateTimeOffset>(parameter.CurrentDate, sanitizeBasedOnMode);
+            Mode = dateTimePicker.Mode;
+            MinDate = dateTimePicker.MinDate;
+            MaxDate = dateTimePicker.MaxDate;
+            CurrentDateTime = new BehaviorRelay<DateTimeOffset>(dateTimePicker.CurrentDate, sanitizeBasedOnMode);
+
+            return base.Initialize(dateTimePicker);
         }
 
         private DateTimeOffset sanitizeBasedOnMode(DateTimeOffset dateTime)
@@ -68,8 +70,8 @@ namespace Toggl.Core.UI.ViewModels
             return result.Clamp(MinDate, MaxDate);
         }
 
-        private Task close() => navigationService.Close(this, defaultResult);
+        private Task close() => Finish(defaultResult);
 
-        private Task save() => navigationService.Close(this, CurrentDateTime.Value);
+        private Task save() => Finish(CurrentDateTime.Value);
     }
 }

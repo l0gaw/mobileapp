@@ -40,14 +40,11 @@ namespace Toggl.Core.UI.ViewModels
             SelectWorkspace = rxActionFactory.FromAsync<SelectableWorkspaceViewModel>(selectWorkspace);
         }
 
-        public override void Prepare(long currentWorkspaceId)
+        public override async Task Initialize(long currentWorkspaceId)
         {
-            this.currentWorkspaceId = currentWorkspaceId;
-        }
+            await base.Initialize(currentWorkspaceId);
 
-        public override async Task Initialize()
-        {
-            await base.Initialize();
+            this.currentWorkspaceId = currentWorkspaceId;
 
             var workspaces = await interactorFactory.GetAllWorkspaces().Execute();
 
@@ -59,9 +56,9 @@ namespace Toggl.Core.UI.ViewModels
         }
 
         private Task close()
-            => navigationService.Close(this, currentWorkspaceId);
+            => Finish(currentWorkspaceId);
 
         private Task selectWorkspace(SelectableWorkspaceViewModel workspace)
-            => navigationService.Close(this, workspace.WorkspaceId);
+            => Finish(workspace.WorkspaceId);
     }
 }
