@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Linq;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Android;
@@ -7,12 +6,10 @@ using Android.App;
 using Android.Content;
 using Android.Content.PM;
 using Android.Provider;
-using Android.Support.V4.App;
 using Android.Support.V4.Content;
-using MvvmCross;
-using MvvmCross.Platforms.Android;
 using Toggl.Core.UI.Services;
 using Toggl.Droid.Helper;
+using Toggl.Shared;
 using Uri = Android.Net.Uri;
 
 namespace Toggl.Droid.Services
@@ -31,39 +28,7 @@ namespace Toggl.Droid.Services
             => Observable.Return(true);
 
         public IObservable<bool> RequestCalendarAuthorization(bool force = false)
-            => Observable.Defer(() =>
-            {
-                if (checkPermissions(Manifest.Permission.ReadCalendar))
-                    return Observable.Return(true);
-
-                if (calendarAuthorizationSubject != null)
-                    return calendarAuthorizationSubject.AsObservable();
-
-                var topActivity = Mvx.Resolve<IMvxAndroidCurrentTopActivity>().Activity;
-                if (!(topActivity is IPermissionAskingActivity permissionAskingActivity))
-                    return Observable.Return(false);
-
-                permissionAskingActivity.OnPermissionChangedCallback = onPermissionChanged;
-                calendarAuthorizationSubject = new Subject<bool>();
-                ActivityCompat.RequestPermissions(topActivity, new[] { Manifest.Permission.ReadCalendar, Manifest.Permission.WriteCalendar }, calendarAuthCode);
-
-                return calendarAuthorizationSubject.AsObservable();
-            });
-
-        private void onPermissionChanged(int requestCode, string[] permissions, Permission[] grantResults)
-        {
-            if (requestCode != calendarAuthCode)
-            {
-                calendarAuthorizationSubject?.OnNext(false);
-                calendarAuthorizationSubject?.OnCompleted();
-                calendarAuthorizationSubject = null;
-            }
-
-            var permissionWasGranted = grantResults.Any() && grantResults.First() == Permission.Granted;
-            calendarAuthorizationSubject?.OnNext(permissionWasGranted);
-            calendarAuthorizationSubject?.OnCompleted();
-            calendarAuthorizationSubject = null;
-        }
+            => Observable.Throw<bool>(new NotImplementedException("This now needs to happen in the IView interface"));
 
         public IObservable<bool> RequestNotificationAuthorization(bool force = false)
             => Observable.Return(true);
@@ -98,11 +63,6 @@ namespace Toggl.Droid.Services
             }
 
             return true;
-        }
-
-        internal interface IPermissionAskingActivity
-        {
-            Action<int, string[], Permission[]> OnPermissionChangedCallback { get; set; }
         }
     }
 }

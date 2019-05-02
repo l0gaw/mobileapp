@@ -1,18 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reactive;
-using System.Reactive.Disposables;
-using System.Reactive.Linq;
-using MvvmCross;
-using MvvmCross.Platforms.Android;
-using Toggl.Core;
 using Toggl.Core.UI.Services;
-using Android.App;
-using Android.OS;
-using MvvmCross.Platforms.Android.Views;
-using Toggl.Droid.Views;
-using Toggl.Shared.Extensions;
-using AlertDialog = Android.Support.V7.App.AlertDialog;
 using Object = Java.Lang.Object;
 
 namespace Toggl.Droid.Services
