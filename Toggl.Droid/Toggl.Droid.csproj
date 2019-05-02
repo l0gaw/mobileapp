@@ -610,6 +610,9 @@
       <DependentUpon>SettingsFragment.cs</DependentUpon>
     </Compile>
     <Compile Include="Fragments\ReactiveFragment.cs" />
+    <Compile Include="Fragments\ReactiveFragment.DialogProvider.cs">
+      <DependentUpon>ReactiveFragment.cs</DependentUpon>
+    </Compile>
     <Compile Include="Fragments\ReactiveFragment.PermissionHandler.cs">
       <DependentUpon>ReactiveFragment.cs</DependentUpon>
     </Compile>
