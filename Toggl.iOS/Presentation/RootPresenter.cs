@@ -39,7 +39,7 @@ namespace Toggl.iOS.Presentation
                     rootViewController = onboardingViewController;
                     break;
                 case LoginViewModel loginViewModel:
-                    var loginViewController = new LoginViewController();
+                    var loginViewController = LoginViewController.NewInstance();
                     loginViewController.ViewModel = loginViewModel;
                     rootViewController = loginViewController;
                     break;
