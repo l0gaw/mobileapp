@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Toggl.Core.UI.Helper;
 using Toggl.Core.UI.ViewModels;
 using Toggl.iOS.ViewControllers;
 using UIKit;
@@ -63,7 +64,18 @@ namespace Toggl.iOS.Presentation
             if (rootViewController == null)
                 throw new Exception($"Failed to create ViewController for ViewModel of type {viewModel.GetType().Name}");
 
-            Window.RootViewController = rootViewController;
+            setRootViewController(rootViewController);
+        }
+
+        private void setRootViewController(UIViewController controller)
+        {
+            UIView.Transition(
+                Window,
+                Animation.Timings.EnterTiming,
+                UIViewAnimationOptions.TransitionCrossDissolve,
+                () => Window.RootViewController = controller,
+                null
+            );
         }
     }
 }
