@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Reactive.Disposables;
 using Android.Content;
-using Android.Content.PM;
 using Android.OS;
 using Android.Runtime;
 using MvvmCross.Binding.BindingContext;
@@ -12,14 +11,12 @@ using MvvmCross.ViewModels;
 using MvvmCross.Views;
 using Toggl.Core.UI.ViewModels;
 using Toggl.Core.UI.Views;
-using static Toggl.Droid.Services.PermissionsServiceAndroid;
 
 namespace Toggl.Droid.Activities
 {
     public abstract partial class ReactiveActivity<TViewModel> : 
         MvxEventSourceAppCompatActivity, 
-        IMvxAndroidView, 
-        IPermissionAskingActivity,
+        IMvxAndroidView,
         IView
         where TViewModel : class, IMvxViewModel, IViewModel
     {
@@ -46,8 +43,6 @@ namespace Toggl.Droid.Activities
         }
 
         public IMvxBindingContext BindingContext { get; set; }
-
-        public Action<int, string[], Permission[]> OnPermissionChangedCallback { get; set; }
 
         protected ReactiveActivity()
         {
@@ -108,14 +103,6 @@ namespace Toggl.Droid.Activities
 
             if (!disposing) return;
             DisposeBag?.Dispose();
-        }
-
-        public override void OnRequestPermissionsResult(int requestCode, string[] permissions, Permission[] grantResults)
-        {
-            base.OnRequestPermissionsResult(requestCode, permissions, grantResults);
-
-            OnPermissionChangedCallback?.Invoke(requestCode, permissions, grantResults);
-            OnPermissionChangedCallback = null;
         }
     }
 }
