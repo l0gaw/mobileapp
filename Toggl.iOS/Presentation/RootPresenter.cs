@@ -8,11 +8,7 @@ namespace Toggl.iOS.Presentation
 {
     public class RootPresenter : IosPresenter
     {
-        public RootPresenter(UIWindow window, AppDelegate appDelegate) : base(window, appDelegate)
-        {
-        }
-
-        protected override HashSet<Type> AcceptedViewModels => new HashSet<Type>
+        private HashSet<Type> acceptedViewModels = new HashSet<Type>
         {
             typeof(MainTabBarViewModel),
             typeof(OnboardingViewModel),
@@ -21,6 +17,12 @@ namespace Toggl.iOS.Presentation
             typeof(TokenResetViewModel),
             typeof(OutdatedAppViewModel),
         };
+
+        protected override HashSet<Type> AcceptedViewModels => acceptedViewModels;
+
+        public RootPresenter(UIWindow window, AppDelegate appDelegate) : base(window, appDelegate)
+        {
+        }
 
         protected override void PresentOnMainThread<TInput, TOutput>(ViewModel<TInput, TOutput> viewModel)
         {
