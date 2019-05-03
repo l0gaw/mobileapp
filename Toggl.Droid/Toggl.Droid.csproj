@@ -364,6 +364,8 @@
     <Compile Include="Adapters\SelectTagsRecyclerAdapter.cs" />
     <Compile Include="Activities\SelectProjectActivity.cs" />
     <Compile Include="Adapters\SelectProjectRecyclerAdapter.cs" />
+    <Compile Include="Extensions\PermissionRequesterComponentExtensions.cs" />
+    <Compile Include="Helper\IPermissionRequesterComponent.cs" />
     <Compile Include="Presentation\AndroidPresenter.cs" />
     <Compile Include="Startup\AndroidDependencyContainer.cs" />
     <Compile Include="Extensions\FloatingActionButtonExtensions.cs" />
