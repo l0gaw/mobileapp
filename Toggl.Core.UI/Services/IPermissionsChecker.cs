@@ -2,7 +2,7 @@
 
 namespace Toggl.Core.UI.Services
 {
-    public interface IPermissionsService : IPermissionRequester
+    public interface IPermissionsChecker : IPermissionRequester
     {
         IObservable<bool> CalendarPermissionGranted { get; }
 

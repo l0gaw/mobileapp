@@ -12,7 +12,7 @@ using Toggl.Droid.Helper;
 namespace Toggl.Droid.Services
 {
     [Preserve(AllMembers = true)]
-    public sealed class PermissionsServiceAndroid : IPermissionsService
+    public sealed class PermissionsCheckerAndroid : IPermissionsChecker
     {
         public IObservable<bool> CalendarPermissionGranted
             => Observable.Start(() => checkPermissions(Manifest.Permission.ReadCalendar));

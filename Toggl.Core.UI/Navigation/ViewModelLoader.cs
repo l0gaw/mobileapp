@@ -109,7 +109,7 @@ namespace Toggl.Core.UI.Navigation
                     dependencyContainer.InteractorFactory,
                     dependencyContainer.OnboardingStorage,
                     dependencyContainer.SchedulerProvider,
-                    dependencyContainer.PermissionsService,
+                    dependencyContainer.PermissionsChecker,
                     dependencyContainer.NavigationService,
                     dependencyContainer.RemoteConfigService,
                     dependencyContainer.SuggestionProviderContainer,
@@ -313,7 +313,7 @@ namespace Toggl.Core.UI.Navigation
             if (viewModelType == typeof(CalendarPermissionDeniedViewModel))
                 return new CalendarPermissionDeniedViewModel(
                     dependencyContainer.NavigationService,
-                    dependencyContainer.PermissionsService,
+                    dependencyContainer.PermissionsChecker,
                     dependencyContainer.RxActionFactory);
 
             if (viewModelType == typeof(CalendarViewModel))
@@ -327,7 +327,7 @@ namespace Toggl.Core.UI.Navigation
                     dependencyContainer.InteractorFactory,
                     dependencyContainer.OnboardingStorage,
                     dependencyContainer.SchedulerProvider,
-                    dependencyContainer.PermissionsService,
+                    dependencyContainer.PermissionsChecker,
                     dependencyContainer.NavigationService,
                     dependencyContainer.StopwatchProvider,
                     dependencyContainer.RxActionFactory);
@@ -363,7 +363,7 @@ namespace Toggl.Core.UI.Navigation
                     dependencyContainer.InteractorFactory,
                     dependencyContainer.NavigationService,
                     dependencyContainer.RxActionFactory,
-                    dependencyContainer.PermissionsService);
+                    dependencyContainer.PermissionsChecker);
 
             if (viewModelType == typeof(LicensesViewModel))
                 return new LicensesViewModel(
@@ -373,7 +373,7 @@ namespace Toggl.Core.UI.Navigation
                 return new NotificationSettingsViewModel(
                     dependencyContainer.NavigationService,
                     dependencyContainer.BackgroundService,
-                    dependencyContainer.PermissionsService,
+                    dependencyContainer.PermissionsChecker,
                     dependencyContainer.UserPreferences,
                     dependencyContainer.SchedulerProvider,
                     dependencyContainer.RxActionFactory);
@@ -402,7 +402,7 @@ namespace Toggl.Core.UI.Navigation
                     dependencyContainer.IntentDonationService,
                     dependencyContainer.StopwatchProvider,
                     dependencyContainer.RxActionFactory,
-                    dependencyContainer.PermissionsService,
+                    dependencyContainer.PermissionsChecker,
                     dependencyContainer.SchedulerProvider);
 
             if (viewModelType == typeof(UpcomingEventsNotificationSettingsViewModel))
