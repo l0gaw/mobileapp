@@ -7,6 +7,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using Toggl.Core.Analytics;
+using Toggl.Core.UI.Navigation;
 using Toggl.Core.UI.ViewModels;
 using Toggl.Core.Tests.TestExtensions;
 using Toggl.Core.Tests.Generators;
@@ -15,6 +16,7 @@ using Toggl.Shared.Extensions;
 using Xunit;
 using static Toggl.Shared.Extensions.EmailExtensions;
 using static Toggl.Shared.Extensions.PasswordExtensions;
+using Toggl.Core.UI.Parameters;
 
 namespace Toggl.Core.Tests.UI.ViewModels
 {
@@ -231,7 +233,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
         {
             private async Task setup(bool hasUnsyncedData = false, bool userConfirmsSignout = true)
             {
-                DialogService.Confirm(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+                View.Confirm(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
                              .Returns(Observable.Return(userConfirmsSignout));
                 DataSource.HasUnsyncedData().Returns(Observable.Return(hasUnsyncedData));
 
@@ -257,7 +259,8 @@ namespace Toggl.Core.Tests.UI.ViewModels
                 ViewModel.SignOut.Execute();
 
                 TestScheduler.Start();
-                await NavigationService.Received().Navigate<LoginViewModel>();
+                await NavigationService.Received()
+                    .Navigate<LoginViewModel, CredentialsParameter>(Arg.Any<CredentialsParameter>());
             }
 
             [Fact, LogIfTooSlow]
@@ -268,7 +271,7 @@ namespace Toggl.Core.Tests.UI.ViewModels
                 ViewModel.SignOut.Execute();
 
                 TestScheduler.Start();
-                await DialogService.Received().Confirm(
+                await View.Received().Confirm(
                     Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
             }
 

@@ -1,13 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Reactive;
-using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using Android.App;
 using Toggl.Core.UI.Services;
 using Toggl.Droid.Extensions;
-using Toggl.Droid.Views;
-using Toggl.Shared.Extensions;
 
 namespace Toggl.Droid.Activities
 {

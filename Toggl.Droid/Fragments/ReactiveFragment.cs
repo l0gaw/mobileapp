@@ -1,30 +1,35 @@
-﻿using System.Reactive.Disposables;
-using Android.OS;
+﻿using System;
+using System.Reactive.Disposables;
+using System.Threading.Tasks;
+using Android.Runtime;
+using Android.Support.V4.App;
 using Android.Views;
-using MvvmCross.Droid.Support.V4;
-using MvvmCross.ViewModels;
 using Toggl.Core.UI.ViewModels;
 using Toggl.Core.UI.Views;
 
 namespace Toggl.Droid.Fragments
 {
-    public abstract partial class ReactiveFragment<TViewModel> : MvxFragment<TViewModel>, IView
-        where TViewModel : class, IMvxViewModel, IViewModel
+    public abstract partial class ReactiveFragment<TViewModel> : Fragment, IView
+        where TViewModel : class, IViewModel
     {
         protected CompositeDisposable DisposeBag = new CompositeDisposable();
 
+        public TViewModel ViewModel { get; set; }
+
         protected abstract void InitializeViews(View view);
 
-        public override void OnViewCreated(View view, Bundle savedInstanceState)
+        protected ReactiveFragment()
         {
-            base.OnViewCreated(view, savedInstanceState);
-            ViewModel.AttachView(this);
+        }
+
+        protected ReactiveFragment(IntPtr javaReference, JniHandleOwnership transfer)
+            : base(javaReference, transfer)
+        {
         }
 
         public override void OnDestroyView()
         {
             base.OnDestroyView();
-            ViewModel.DetachView();
             DisposeBag.Dispose();
             DisposeBag = new CompositeDisposable();
         }
@@ -35,6 +40,11 @@ namespace Toggl.Droid.Fragments
 
             if (!disposing) return;
             DisposeBag?.Dispose();
+        }
+
+        public Task Close()
+        {
+            return Task.CompletedTask;
         }
     }
 }

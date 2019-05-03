@@ -286,7 +286,7 @@ namespace Toggl.Core.UI.ViewModels
             SelectBeginningOfWeek = rxActionFactory.FromAsync(selectBeginningOfWeek);
             ToggleTimeEntriesGrouping = rxActionFactory.FromAsync(toggleTimeEntriesGrouping);
             SelectDefaultWorkspace = rxActionFactory.FromAsync<SelectableWorkspaceViewModel>(selectDefaultWorkspace);
-            Close = rxActionFactory.FromAsync(close);
+            Close = rxActionFactory.FromAsync(Finish);
         }
 
         public override async Task Initialize()
@@ -347,7 +347,7 @@ namespace Toggl.Core.UI.ViewModels
         }
 
         private Task openCalendarSettings()
-            => navigationService.Navigate<CalendarSettingsViewModel>();
+            => navigationService.Navigate<CalendarSettingsViewModel, bool, string[]>(false);
 
         private Task openCalendarSmartReminders()
             => navigationService.Navigate<UpcomingEventsNotificationSettingsViewModel, Unit>();
@@ -362,7 +362,7 @@ namespace Toggl.Core.UI.ViewModels
 
             return interactorFactory.Logout(LogoutSource.Settings)
                 .Execute()
-                .Do(_ => navigationService.Navigate<LoginViewModel>());
+                .Do(_ => navigationService.Navigate<LoginViewModel, CredentialsParameter>(CredentialsParameter.Empty));
         }
 
         private IObservable<bool> isSynced()
@@ -504,7 +504,5 @@ namespace Toggl.Core.UI.ViewModels
             var authorized = await permissionsChecker.CalendarPermissionGranted;
             calendarPermissionGranted.OnNext(authorized);
         }
-        
-        private Task close() => navigationService.Close(this);
     }
 }

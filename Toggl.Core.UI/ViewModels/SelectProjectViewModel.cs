@@ -106,16 +106,14 @@ namespace Toggl.Core.UI.ViewModels
             return true;
         }
 
-        public override void Prepare(SelectProjectParameter parameter)
+        public override async Task Initialize(SelectProjectParameter parameter)
         {
+            await base.Initialize(parameter);
+
             taskId = parameter.TaskId;
             projectId = parameter.ProjectId;
             workspaceId = parameter.WorkspaceId;
-        }
 
-        public override async Task Initialize()
-        {
-            await base.Initialize();
             navigationFromEditTimeEntryViewModelStopwatch = stopwatchProvider.Get(MeasuredOperation.OpenSelectProjectFromEditView);
             stopwatchProvider.Remove(MeasuredOperation.OpenSelectProjectFromEditView);
 
@@ -192,13 +190,11 @@ namespace Toggl.Core.UI.ViewModels
 
             var project = await interactorFactory.GetProjectById(createdProjectId.Value).Execute();
             var parameter = SelectProjectParameter.WithIds(project.Id, null, project.WorkspaceId);
-            await navigationService.Close(this, parameter);
+            await Finish(parameter);
         }
 
         private Task close()
-            => navigationService.Close(
-                this,
-                SelectProjectParameter.WithIds(projectId, taskId, workspaceId));
+            => Finish(SelectProjectParameter.WithIds(projectId, taskId, workspaceId));
 
         private async Task selectProject(AutocompleteSuggestion suggestion)
         {
@@ -246,9 +242,7 @@ namespace Toggl.Core.UI.ViewModels
                     throw new ArgumentException($"{nameof(suggestion)} must be either of type {nameof(ProjectSuggestion)} or {nameof(TaskSuggestion)}.");
             }
 
-            navigationService.Close(
-                this,
-                SelectProjectParameter.WithIds(projectId, taskId, workspaceId));
+            Finish(SelectProjectParameter.WithIds(projectId, taskId, workspaceId));
         }
 
         private void toggleTaskSuggestions(ProjectSuggestion projectSuggestion)

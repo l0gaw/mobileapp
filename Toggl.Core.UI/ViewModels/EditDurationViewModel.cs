@@ -149,7 +149,7 @@ namespace Toggl.Core.UI.ViewModels
             this.startTime.OnNext(startTime.RoundDownToMinute());
         }
 
-        public override void Prepare(EditDurationParameters parameter)
+        public override Task Initialize(EditDurationParameters parameter)
         {
             defaultResult = parameter.DurationParam;
             isRunning.OnNext(defaultResult.Duration.HasValue == false);
@@ -176,6 +176,8 @@ namespace Toggl.Core.UI.ViewModels
             minimumDateTime.OnNext(start);
             maximumDateTime.OnNext(stop);
             IsDurationInitiallyFocused = parameter.IsDurationInitiallyFocused;
+
+            return base.Initialize(parameter);
         }
 
         public void TimeEditedWithSource(EditTimeSource source)
@@ -187,7 +189,7 @@ namespace Toggl.Core.UI.ViewModels
         {
             analyticsEvent = analyticsEvent.With(result: EditDurationEvent.Result.Cancel);
             analyticsService.Track(analyticsEvent);
-            return navigationService.Close(this, defaultResult);
+            return Finish(defaultResult);
         }
 
         private Task save()
@@ -196,7 +198,7 @@ namespace Toggl.Core.UI.ViewModels
             analyticsService.Track(analyticsEvent);
             var duration = stopTime.Value - startTime.Value;
             var result = DurationParameter.WithStartAndDuration(startTime.Value, isRunning.Value ? (TimeSpan?)null : duration);
-            return navigationService.Close(this, result);
+            return Finish(result);
         }
 
         private void stopTimeEntry()
@@ -321,9 +323,9 @@ namespace Toggl.Core.UI.ViewModels
             return timeSpan.ToFormattedString(format);
         }
 
-        public override void ViewDestroy(bool viewFinishing)
+        public override void ViewDestroyed()
         {
-            base.ViewDestroy(viewFinishing);
+            base.ViewDestroyed();
             runningTimeEntryDisposable?.Dispose();
         }
 
